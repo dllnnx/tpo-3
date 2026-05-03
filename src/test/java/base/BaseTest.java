@@ -1,49 +1,38 @@
 package base;
 
 import org.apache.log4j.Logger;
-import org.junit.jupiter.api.BeforeEach;
 import org.openqa.selenium.WebDriver;
-import org.openqa.selenium.chrome.ChromeDriver;
-import org.openqa.selenium.firefox.FirefoxDriver;
-import ru.itmo.exceptions.InvalidPropertiesException;
-import utils.Constants;
-import utils.Context;
-import utils.Properties;
+import org.openqa.selenium.support.ui.WebDriverWait;
+import org.testng.annotations.AfterMethod;
+import org.testng.annotations.BeforeMethod;
+import org.testng.annotations.Optional;
+import org.testng.annotations.Parameters;
+import utils.DriverFactory;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.time.Duration;
 
-public class BaseTest {
+public abstract class BaseTest {
 
     private static final Logger logger = Logger.getLogger(BaseTest.class);
 
-    public Context context;
-    public List<WebDriver> driverList;
+    protected WebDriver driver;
+    protected WebDriverWait wait;
 
-    @BeforeEach
-    public void setUp() {
-        context = new Context();
-        driverList = new ArrayList<>();
-        try {
-            Properties.getInstance().reading(context);
-        } catch (IllegalArgumentException e) {
-            logger.error(e.getMessage());
-        }
-
-        if (context.getGeckodriver() != null) {
-            System.setProperty(Constants.WEBDRIVER_FIREFOX_DRIVER, context.getGeckodriver());
-            driverList.add(new FirefoxDriver());
-        }
-        if (context.getChromedriver() != null) {
-            System.setProperty(Constants.WEBDRIVER_CHROME_DRIVER, context.getChromedriver());
-            driverList.add(new ChromeDriver());
-        }
-        if (driverList.isEmpty()) throw new InvalidPropertiesException();
+    @Parameters("browser")
+    @BeforeMethod(alwaysRun = true)
+    public void setUp(@Optional("chrome") String browser) {
+        logger.info("Starting browser: " + browser);
+        driver = DriverFactory.create(browser);
+        driver.manage().window().maximize();
+        driver.manage().timeouts().pageLoadTimeout(Duration.ofSeconds(60));
+        driver.manage().timeouts().implicitlyWait(Duration.ZERO);
+        wait = new WebDriverWait(driver, Duration.ofSeconds(5), Duration.ofMillis(500));
     }
 
-    @BeforeEach
+    @AfterMethod(alwaysRun = true)
     public void tearDown() {
-        driverList.forEach(WebDriver::quit);
+        if (driver != null) {
+            driver.quit();
+        }
     }
-
 }
