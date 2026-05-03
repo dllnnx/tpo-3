@@ -7,20 +7,22 @@ import pages.HomePage;
 import pages.TrainPage;
 import pages.TrainResultsPage;
 
+
 public class TrainTest extends BaseTest {
 
     /**
      * UC-01: Поиск ж/д билетов Москва → Санкт-Петербург с выбором даты.
-     * Главная → шапка → /poezda/ → Откуда=Москва → Куда=Санкт-Петербург →
-     * дата +30 дней (jQuery-UI datepicker) → Submit → ассерт ≥ 5 карточек поездов,
-     * упоминания типов вагонов в результатах.
+     * Главная → клик по вкладке «Ж/д билеты» (URL остаётся главной, у submit
+     * меняется текст на «Найти поезда») → Откуда=Москва → Куда=Санкт-Петербург →
+     * дата +30 дней (jQuery-UI datepicker) → Submit → редирект на /poezda/ с
+     * результатами → ассерт ≥ 4 карточек поездов, упоминания типов вагонов.
      */
     @Test(description = "UC-01: Поиск ж/д Москва → СПб с выбором даты")
     public void uc01_searchTrainsMoscowSpbWithDate() {
-        HomePage home = new HomePage(driver, wait).open();
-        TrainPage train = home.clickTrainNavLink();
+        HomePage home = new HomePage(driver, wait).open()
+                .clickTrainTab();
 
-        TrainResultsPage results = train
+        TrainResultsPage results = home
                 .fillFrom("Москв", "Москва")
                 .fillTo("Санкт-Пете", "Санкт-Петербург")
                 .pickDateInDays(30)
