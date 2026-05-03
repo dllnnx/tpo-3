@@ -1,0 +1,87 @@
+@startuml tutu_use_cases
+left to right direction
+skinparam packageStyle rectangle
+skinparam shadowing false
+skinparam usecase {
+  BackgroundColor #FEFEFE
+  BorderColor #444444
+}
+skinparam package {
+  BackgroundColor #F5F8FA
+  BorderColor #5B7C99
+}
+
+title Use-case диаграмма функционального тестирования tutu.ru
+
+actor "Гость" as Guest
+
+rectangle "tutu.ru" {
+
+  package "Главная страница" {
+    usecase "UC-10\nОткрыть модалку\nавторизации\nи ввести email" as UC10
+  }
+
+  package "Ж/д билеты\n/poezda/" {
+    usecase "UC-01\nПоиск ж/д\nМосква → СПб\nс выбором даты" as UC01
+    usecase "UC-02\nФильтр «Сапсан»\nна результатах ж/д" as UC02
+    usecase "UC-03\nПереключение даты\nв date-strip\nрезультатов ж/д" as UC03
+  }
+
+  package "Авиабилеты\navia.tutu.ru" {
+    usecase "UC-04\nПоиск авиабилетов\nМосква → СПб" as UC04
+    usecase "UC-05\nФильтр «С багажом»\nна результатах авиа" as UC05
+    usecase "UC-12\nНегативный:\nодинаковые города\nв авиа форме" as UC12
+  }
+
+  package "Автобусы\nbus.tutu.ru" {
+    usecase "UC-06\nПоиск автобусов\nМосква → Тула\nна завтра" as UC06
+  }
+
+  package "Отели\nhotel.tutu.ru" {
+    usecase "UC-07\nПоиск отелей\nв Сочи на 2 ночи" as UC07
+  }
+
+  package "Электрички\n/prigorod/" {
+    usecase "UC-08\nРасписание\nэлектричек\nМосква → Мытищи" as UC08
+  }
+
+  package "Аэроэкспрессы\naeroexpress.tutu.ru" {
+    usecase "UC-09\nРасписание\nаэроэкспрессов" as UC09
+  }
+
+  package "Справочная\n/2read/" {
+    usecase "UC-11\nПоиск\nв справочной" as UC11
+  }
+}
+
+Guest --> UC01
+Guest --> UC02
+Guest --> UC03
+Guest --> UC04
+Guest --> UC05
+Guest --> UC06
+Guest --> UC07
+Guest --> UC08
+Guest --> UC09
+Guest --> UC10
+Guest --> UC11
+Guest --> UC12
+
+UC02 ..> UC01 : <<extend>>\nпосле UC-01
+UC03 ..> UC01 : <<extend>>\nпосле UC-01
+UC05 ..> UC04 : <<extend>>\nпосле UC-04
+
+note right of UC12
+  Негативный сценарий:
+  система должна
+  не пустить пользователя
+  на страницу результатов
+end note
+
+note bottom of UC10
+  Открытие модалки
+  + ввод email
+  + клик «Получить код»
+end note
+
+@enduml
