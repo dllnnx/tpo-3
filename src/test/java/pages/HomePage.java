@@ -12,13 +12,11 @@ public class HomePage extends Page {
 
     private static final By HEADER = By.xpath("//*[@data-ti='header']");
     private static final By LOGIN_BUTTON = By.xpath("//button[@data-ti='login-button']");
-    private static final By TAB_AVIA = By.xpath("//button[normalize-space()='Авиабилеты']");
-    private static final By TAB_TRAIN = By.xpath("//button[normalize-space()='Ж/д билеты']");
-    private static final By TAB_BUS = By.xpath("(//button[normalize-space()='Автобусы'])[1]");
-    private static final By TAB_HOTEL = By.xpath("(//button[normalize-space()='Отели'])[1]");
-    private static final By SUBMIT_BUTTON = By.xpath("//button[contains(@class,'j-submit_button')]");
-
-    private TrainPage trainForm;
+    private static final By TAB_AVIA_BTN = By.xpath("//button[@data-ti='tab-unified-avia']");
+    private static final By TAB_TRAIN_BTN = By.xpath("//button[@data-ti='tab-unified-train']");
+    private static final By TAB_BUS_BTN = By.xpath("//button[@data-ti='tab-unified-bus']");
+    private static final By TAB_HOTEL_BTN = By.xpath("//button[@data-ti='tab-unified-hotel']");
+    private static final By SUBMIT_BUTTON = By.xpath("//button[@data-ti='submit-button']");
 
     public HomePage(WebDriver driver, WebDriverWait wait) {
         super(driver, wait, Constants.BASE_URL);
@@ -35,59 +33,43 @@ public class HomePage extends Page {
     public boolean isHeaderNavigationVisible() {
         wait.until(ExpectedConditions.presenceOfElementLocated(HEADER));
         wait.until(ExpectedConditions.presenceOfElementLocated(LOGIN_BUTTON));
-        wait.until(ExpectedConditions.presenceOfElementLocated(TAB_AVIA));
-        wait.until(ExpectedConditions.presenceOfElementLocated(TAB_TRAIN));
+        wait.until(ExpectedConditions.presenceOfElementLocated(TAB_AVIA_BTN));
+        wait.until(ExpectedConditions.presenceOfElementLocated(TAB_TRAIN_BTN));
         return true;
     }
 
-    /**
-     * Кликает по вкладке «Ж/д билеты» в форме на главной.
-     *
-     * На реальном сайте такой клик НЕ навигирует на /poezda/ — страница
-     * остаётся главной, но форма меняет содержимое: текст submit-кнопки
-     * становится «Найти поезда». Ждём именно этот признак вместо
-     * ожидания смены URL.
-     */
-    public HomePage clickTrainTab() {
-        WebElement btn = wait.until(ExpectedConditions.elementToBeClickable(TAB_TRAIN));
+    public AviaPage clickAviaTab() {
+        clickTab(TAB_AVIA_BTN, "Найти авиабилеты");
+        return new AviaPage(driver, wait);
+    }
+
+    public TrainPage clickTrainTab() {
+        clickTab(TAB_TRAIN_BTN, "Найти поезда");
+        return new TrainPage(driver, wait);
+    }
+
+    public BusPage clickBusTab() {
+        clickTab(TAB_BUS_BTN, "Найти автобусы");
+        return new BusPage(driver, wait);
+    }
+
+    public HotelPage clickHotelTab() {
+        clickTab(TAB_HOTEL_BTN, "Найти отели");
+        return new HotelPage(driver, wait);
+    }
+
+    private void clickTab(By tabLocator, String expectedSubmitText) {
+        WebElement btn = wait.until(ExpectedConditions.elementToBeClickable(tabLocator));
         ((JavascriptExecutor) driver).executeScript("arguments[0].click();", btn);
         wait.until(d -> {
             try {
                 String txt = d.findElement(SUBMIT_BUTTON).getText();
-                return txt != null && txt.contains("Найти поезда");
+                return txt != null && txt.contains(expectedSubmitText);
             } catch (Exception e) {
                 return false;
             }
         });
-        trainForm = new TrainPage(driver, wait);
-        return this;
-    }
-
-    public HomePage fillFrom(String prefix, String exactCity) {
-        ensureTrainForm().fillFrom(prefix, exactCity);
-        return this;
-    }
-
-    public HomePage fillTo(String prefix, String exactCity) {
-        ensureTrainForm().fillTo(prefix, exactCity);
-        return this;
-    }
-
-    public HomePage pickDateInDays(int daysFromToday) {
-        ensureTrainForm().pickDateInDays(daysFromToday);
-        return this;
-    }
-
-    public TrainResultsPage submitSearch() {
-        return ensureTrainForm().submitSearch();
-    }
-
-    private TrainPage ensureTrainForm() {
-        if (trainForm == null) {
-            throw new IllegalStateException(
-                    "Сначала нужно вызвать clickTrainTab() — форма «Ж/д билеты» ещё не активирована");
-        }
-        return trainForm;
+        hideOverlayWidgets();
     }
 
     public LoginModalPage openLoginModal() {

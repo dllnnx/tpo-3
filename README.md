@@ -4,8 +4,8 @@
 
 ## Что внутри
 
-- **12 use cases** — реальные пользовательские путешествия по сайту tutu.ru: поиск ж/д билетов с фильтром «Сапсан», поиск авиабилетов с календарём и фильтром «С багажом», поиск автобусов / отелей / электричек, открытие модалки авторизации, поиск в справочной + один негативный сценарий.
-- **Page Object** — 14 страничных классов в `src/test/java/pages/`, локаторы только через **XPath** (включая `data-ti`-атрибуты, label-based и стабильные `name`-атрибуты).
+- **11 use cases** — реальные пользовательские путешествия по сайту tutu.ru: поиск ж/д билетов с фильтром «Сапсан», поиск авиабилетов с календарём и фильтром «С багажом», поиск автобусов / отелей / электричек, открытие модалки авторизации, поиск в справочной + один негативный сценарий. Все каталожные тесты (Авиа / Ж/д / Автобусы / Отели) стартуют с главной `tutu.ru` и переключаются на нужный каталог кликом по вкладке формы.
+- **Page Object** — 13 страничных классов в `src/test/java/pages/`, локаторы только через **XPath** (включая `data-ti`-атрибуты и label-based).
 - **Только явные ожидания** `WebDriverWait` — никаких `Thread.sleep`.
 - **TestNG** — три профиля запуска: parallel / chrome / firefox.
 
@@ -14,7 +14,7 @@
 ```
 src/test/java/
 ├── base/BaseTest.java              # TestNG @Parameters("browser"), single driver, WebDriverWait
-├── pages/                          # 14 Page Object'ов
+├── pages/                          # 13 Page Object'ов
 │   ├── Page.java                   # абстрактный базовый
 │   ├── HomePage.java
 │   ├── TrainPage.java
@@ -27,17 +27,15 @@ src/test/java/
 │   ├── HotelResultsPage.java
 │   ├── ElectrichkaPage.java
 │   ├── ElectrichkaResultsPage.java
-│   ├── AeroexpressPage.java
 │   ├── FaqPage.java
 │   └── LoginModalPage.java
-├── tests/                          # 8 классов с 12 тестовыми методами (UC-01..UC-12)
+├── tests/                          # 7 классов с 11 тестовыми методами (UC-01..UC-08, UC-10..UC-12)
 │   ├── HomePageTest.java           # UC-10
 │   ├── TrainTest.java              # UC-01, UC-02, UC-03
 │   ├── AviaTest.java               # UC-04, UC-05, UC-12
 │   ├── BusTest.java                # UC-06
 │   ├── HotelTest.java              # UC-07
 │   ├── ElectrichkaTest.java        # UC-08
-│   ├── AeroexpressTest.java        # UC-09
 │   └── FaqTest.java                # UC-11
 └── utils/
     ├── Constants.java
@@ -142,8 +140,8 @@ ASCII-эквивалент — в `docs/diagram.md`.
 
 ## Технические заметки
 
-- Все локаторы — XPath. Используются стабильные `data-ti`-атрибуты для React-компонентов tutu.ru, label-based XPath (`label/following::input`) для форм без `for`-привязки, и `name`-атрибуты для legacy форм (например, ж/д страница на jQuery).
+- Все локаторы — XPath. Используются стабильные `data-ti`-атрибуты для React-компонентов tutu.ru и label-based XPath для форм без `for`-привязки.
 - Все ожидания — `WebDriverWait` с `ExpectedConditions`. Никакого `Thread.sleep`.
 - На страницах `tutu.ru` есть chat-widget iframe и sticky overlay — они скрываются JS-вставкой в `Page.open()` через `hideOverlayWidgets()`, чтобы не блокировать клики.
-- Для `avia.tutu.ru` календарь использует `data-date` с epoch миллисекундами (Europe/Moscow timezone) — точное попадание в нужный день.
-- Для `/poezda/` календарь — стандартный jQuery-UI datepicker с навигацией «Пред»/«След».
+- Каталожные тесты (Авиа / Ж/д / Автобусы / Отели) стартуют на `tutu.ru`; `HomePage.click*Tab()` кликает по `[data-ti='tab-unified-*']`, форма переключается на нужный каталог и работает с тем же набором `data-ti`-локаторов (`input-root` / `input` / `trip-dates` / `submit-button`).
+- Календарь (`[data-ti='calendar']`) использует `data-date` с epoch миллисекундами (Europe/Moscow) — точное попадание в нужный день.

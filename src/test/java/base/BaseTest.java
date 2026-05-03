@@ -26,7 +26,7 @@ public abstract class BaseTest {
         driver.manage().window().maximize();
         driver.manage().timeouts().pageLoadTimeout(Duration.ofSeconds(60));
         driver.manage().timeouts().implicitlyWait(Duration.ZERO);
-        wait = new WebDriverWait(driver, Duration.ofSeconds(5), Duration.ofMillis(500));
+        wait = new WebDriverWait(driver, Duration.ofSeconds(3), Duration.ofMillis(500));
     }
 
     @AfterMethod(alwaysRun = true)

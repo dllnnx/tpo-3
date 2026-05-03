@@ -6,115 +6,184 @@ import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.WebElement;
 import org.openqa.selenium.support.ui.ExpectedConditions;
 import org.openqa.selenium.support.ui.WebDriverWait;
-import utils.Constants;
 import utils.DateUtils;
 
+import java.time.Duration;
 import java.time.LocalDate;
+import java.time.ZoneId;
+import java.util.List;
 
 public class TrainPage extends Page {
 
-    private static final By FROM_INPUT = By.xpath("//input[@name='schedule_station_from']");
-    private static final By TO_INPUT = By.xpath("//input[@name='schedule_station_to']");
-    private static final By NNST1_HIDDEN = By.xpath("//input[@name='nnst1']");
-    private static final By NNST2_HIDDEN = By.xpath("//input[@name='nnst2']");
-    private static final By DATE_INPUT = By.xpath("//input[contains(@class,'j-date_to')]");
-    private static final By DATEPICKER = By.id("ui-datepicker-div");
-    private static final By DATEPICKER_NEXT = By.xpath("//a[contains(@class,'ui-datepicker-next')]");
-    private static final By DATEPICKER_MONTH_LAST = By.xpath("//div[contains(@class,'ui-datepicker-group-last')]//span[@class='ui-datepicker-month']");
-    private static final By DATEPICKER_MONTH_FIRST = By.xpath("//div[contains(@class,'ui-datepicker-group-first')]//span[@class='ui-datepicker-month']");
-    private static final By SUBMIT = By.xpath("//button[contains(@class,'j-submit_button')]");
+    private static final By FROM_INPUT = By.xpath(
+            "//div[@data-ti='input-root'][.//span[@data-ti='input-label' and normalize-space()='Откуда']]//input[@data-ti='input']"
+    );
+    private static final By TO_INPUT = By.xpath(
+            "//div[@data-ti='input-root'][.//span[@data-ti='input-label' and normalize-space()='Куда']]//input[@data-ti='input']"
+    );
+    private static final By DATE_INPUT = By.xpath("//input[@data-ti='trip-dates']");
+    private static final By SUGGEST_CONTAINER = By.xpath("//div[@data-ti='dropdown-suggest-container']");
+    private static final By SUGGEST_ITEM = By.xpath("//div[@data-ti='dropdown-suggest-container']//div[@data-ti='dropdown-item']");
+    private static final By SUBMIT = By.xpath("//button[@data-ti='submit-button']");
+    private static final By CALENDAR = By.xpath("//*[@data-ti='calendar']");
 
     public TrainPage(WebDriver driver, WebDriverWait wait) {
-        super(driver, wait, Constants.TRAIN_URL);
-    }
-
-    @Override
-    public TrainPage open() {
-        super.open();
-        return this;
+        super(driver, wait, null);
     }
 
     public TrainPage fillFrom(String prefix, String exactCity) {
-        WebElement input = wait.until(ExpectedConditions.elementToBeClickable(FROM_INPUT));
-        input.click();
-        input.clear();
-        input.sendKeys(prefix);
-        clickSuggest(true, exactCity);
-        wait.until(d -> !d.findElement(NNST1_HIDDEN).getDomAttribute("value").isEmpty());
-        return this;
+        return fillField(FROM_INPUT, prefix, exactCity);
     }
 
     public TrainPage fillTo(String prefix, String exactCity) {
-        WebElement input = wait.until(ExpectedConditions.elementToBeClickable(TO_INPUT));
-        input.click();
-        input.clear();
-        input.sendKeys(prefix);
-        clickSuggest(false, exactCity);
-        wait.until(d -> !d.findElement(NNST2_HIDDEN).getDomAttribute("value").isEmpty());
-        return this;
+        return fillField(TO_INPUT, prefix, exactCity);
     }
 
-    private void clickSuggest(boolean fromBlock, String city) {
-        String container = fromBlock ? "j-station_from" : "j-station_to";
-        By suggestItem = By.xpath(
-                "//div[contains(@class,'" + container + "')]//ul[contains(@class,'_level_1')]" +
-                        "//li[normalize-space()='" + city + "']/div"
+    private TrainPage fillField(By input, String prefix, String exactCity) {
+        WebElement inp = wait.until(ExpectedConditions.presenceOfElementLocated(input));
+        ((JavascriptExecutor) driver).executeScript(
+                "arguments[0].scrollIntoView({block:'center'});", inp);
+        inp.click();
+        inp.sendKeys(prefix);
+        wait.until(ExpectedConditions.visibilityOfElementLocated(SUGGEST_CONTAINER));
+
+        By exactItem = By.xpath(
+                "//div[@data-ti='dropdown-suggest-container']//div[@data-ti='dropdown-item']" +
+                        "[.//*[normalize-space()='" + exactCity + "']]"
         );
-        wait.until(ExpectedConditions.presenceOfElementLocated(suggestItem));
-        WebElement el = driver.findElement(suggestItem);
-        ((JavascriptExecutor) driver).executeScript("arguments[0].click();", el);
+        WebElement target = null;
+        try {
+            target = new WebDriverWait(driver, Duration.ofSeconds(5))
+                    .until(d -> {
+                        List<WebElement> exact = d.findElements(exactItem);
+                        for (WebElement e : exact) {
+                            if (isDisplayedSafe(e)) return e;
+                        }
+                        return null;
+                    });
+        } catch (Exception ignored) {
+        }
+        if (target == null) {
+            wait.until(d -> {
+                List<WebElement> items = d.findElements(SUGGEST_ITEM);
+                return !items.isEmpty() && items.get(0).isDisplayed();
+            });
+            target = driver.findElements(SUGGEST_ITEM).get(0);
+        }
+        ((JavascriptExecutor) driver).executeScript("arguments[0].click();", target);
+        try {
+            new WebDriverWait(driver, Duration.ofSeconds(5))
+                    .until(ExpectedConditions.invisibilityOfElementLocated(SUGGEST_CONTAINER));
+        } catch (Exception ignored) {
+        }
+        wait.until(d -> {
+            String v = d.findElement(input).getDomAttribute("value");
+            return v != null && !v.isEmpty();
+        });
+        return this;
     }
 
     public TrainPage pickDateInDays(int daysFromToday) {
         LocalDate target = DateUtils.plusDays(daysFromToday);
-        wait.until(ExpectedConditions.elementToBeClickable(DATE_INPUT)).click();
-        wait.until(ExpectedConditions.visibilityOfElementLocated(DATEPICKER));
-        navigateMonth(target);
-        clickDay(target.getDayOfMonth(), target);
+        WebElement dateInput = wait.until(ExpectedConditions.elementToBeClickable(DATE_INPUT));
+        ((JavascriptExecutor) driver).executeScript("arguments[0].click();", dateInput);
+
+        wait.until(ExpectedConditions.visibilityOfElementLocated(CALENDAR));
+
+        navigateCalendarToMonth(target);
+        clickDayInVisibleMonth(target);
+        clickCalendarApply();
         return this;
     }
 
-    private void navigateMonth(LocalDate target) {
-        String targetMonthRu = capitalize(DateUtils.monthRu(target));
+    private void navigateCalendarToMonth(LocalDate target) {
+        String targetMonthRu = DateUtils.monthRu(target);
+        String targetYear = String.valueOf(target.getYear());
         for (int i = 0; i < 24; i++) {
-            String first = readMonth(DATEPICKER_MONTH_FIRST);
-            String last = readMonth(DATEPICKER_MONTH_LAST);
-            if (targetMonthRu.equalsIgnoreCase(first) || targetMonthRu.equalsIgnoreCase(last)) {
+            String currentMonth = readCalendarMonthTitle();
+            if (currentMonth.toLowerCase().contains(targetMonthRu.toLowerCase())
+                    && currentMonth.contains(targetYear)) {
                 return;
             }
-            wait.until(ExpectedConditions.elementToBeClickable(DATEPICKER_NEXT)).click();
+            try {
+                WebElement next = driver.findElement(
+                        By.xpath("//button[@data-ti='calendar-month-header-next-button']"));
+                ((JavascriptExecutor) driver).executeScript("arguments[0].click();", next);
+                Thread.yield();
+            } catch (Exception ignored) {
+                return;
+            }
         }
     }
 
-    private String readMonth(By by) {
+    private String readCalendarMonthTitle() {
         try {
-            return driver.findElement(by).getText().trim();
+            return driver.findElement(
+                    By.xpath("//*[@data-ti='calendar-month-header-title']")).getText();
         } catch (Exception e) {
             return "";
         }
     }
 
-    private void clickDay(int day, LocalDate target) {
-        String targetMonthRu = capitalize(DateUtils.monthRu(target));
-        String last = readMonth(DATEPICKER_MONTH_LAST);
-        boolean inLastGroup = targetMonthRu.equalsIgnoreCase(last);
-        String groupClass = inLastGroup ? "ui-datepicker-group-last" : "ui-datepicker-group-first";
-        By dayCell = By.xpath(
-                "//div[contains(@class,'" + groupClass + "')]" +
-                        "//td[not(contains(@class,'ui-state-disabled'))]" +
-                        "/a[normalize-space()='" + day + "']"
+    private void clickDayInVisibleMonth(LocalDate target) {
+        long millis = target.atStartOfDay(ZoneId.of("Europe/Moscow")).toInstant().toEpochMilli();
+        By byEpoch = By.xpath(
+                "//*[@data-ti='calendar-day-cell' and @data-empty='false'" +
+                        " and @data-disabled='false' and @data-date='" + millis + "']"
         );
-        wait.until(ExpectedConditions.elementToBeClickable(dayCell)).click();
-        wait.until(ExpectedConditions.invisibilityOfElementLocated(DATEPICKER));
+        By byDayText = By.xpath(
+                "(//*[@data-ti='calendar-day-cell' and @data-empty='false' and @data-disabled='false']" +
+                        "[.//span[contains(@class,'date_') and normalize-space()='" + target.getDayOfMonth() + "']])[1]"
+        );
+        try {
+            WebElement el = new WebDriverWait(driver, Duration.ofSeconds(8))
+                    .until(d -> {
+                        for (By by : new By[]{byEpoch, byDayText}) {
+                            List<WebElement> els = d.findElements(by);
+                            for (WebElement e : els) {
+                                if (isDisplayedSafe(e)) return e;
+                            }
+                        }
+                        return null;
+                    });
+            ((JavascriptExecutor) driver).executeScript("arguments[0].click();", el);
+        } catch (Exception ignored) {
+        }
     }
 
-    private String capitalize(String s) {
-        if (s == null || s.isEmpty()) return s;
-        return Character.toUpperCase(s.charAt(0)) + s.substring(1);
+    private void clickCalendarApply() {
+        try {
+            WebElement btn = new WebDriverWait(driver, Duration.ofSeconds(5))
+                    .until(ExpectedConditions.elementToBeClickable(
+                            By.xpath("//button[@data-ti='calendar-popper-footer-select-button']")
+                    ));
+            ((JavascriptExecutor) driver).executeScript("arguments[0].click();", btn);
+        } catch (Exception ignored) {
+        }
+        try {
+            new WebDriverWait(driver, Duration.ofSeconds(5))
+                    .until(ExpectedConditions.invisibilityOfElementLocated(CALENDAR));
+        } catch (Exception ignored) {
+        }
     }
 
     public TrainResultsPage submitSearch() {
-        wait.until(ExpectedConditions.elementToBeClickable(SUBMIT)).click();
+        WebElement btn = wait.until(ExpectedConditions.elementToBeClickable(SUBMIT));
+        ((JavascriptExecutor) driver).executeScript(
+                "arguments[0].scrollIntoView({block:'center'});", btn);
+        try {
+            btn.click();
+        } catch (Exception e) {
+            ((JavascriptExecutor) driver).executeScript("arguments[0].click();", btn);
+        }
         return new TrainResultsPage(driver, wait);
+    }
+
+    private boolean isDisplayedSafe(WebElement el) {
+        try {
+            return el.isDisplayed();
+        } catch (Exception e) {
+            return false;
+        }
     }
 }

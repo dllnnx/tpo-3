@@ -3,6 +3,7 @@ package tests;
 import base.BaseTest;
 import org.testng.Assert;
 import org.testng.annotations.Test;
+import pages.HomePage;
 import pages.HotelPage;
 import pages.HotelResultsPage;
 
@@ -17,7 +18,8 @@ public class HotelTest extends BaseTest {
      */
     @Test(description = "UC-07: Поиск отелей в Сочи на 2 ночи")
     public void uc07_searchHotelsSochi() {
-        HotelPage hotel = new HotelPage(driver, wait).open()
+        HotelPage hotel = new HomePage(driver, wait).open()
+                .clickHotelTab()
                 .fillDestination("Сочи")
                 .pickStayDates(30, 2);
 

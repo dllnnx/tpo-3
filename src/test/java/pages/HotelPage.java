@@ -2,50 +2,54 @@ package pages;
 
 import org.openqa.selenium.By;
 import org.openqa.selenium.JavascriptExecutor;
-import org.openqa.selenium.Keys;
 import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.WebElement;
 import org.openqa.selenium.support.ui.ExpectedConditions;
 import org.openqa.selenium.support.ui.WebDriverWait;
-import utils.Constants;
 import utils.DateUtils;
 
 import java.time.Duration;
 import java.time.LocalDate;
+import java.time.ZoneId;
+import java.util.List;
 
 public class HotelPage extends Page {
 
-    private static final By DEST_INPUT = By.xpath("//input[@data-ti='hotels-destination-input']");
-    private static final By DATE_INPUT = By.xpath("//input[@data-ti='date-input']");
-    private static final By SUBMIT = By.xpath("//button[normalize-space()='Найти']");
+    private static final By DEST_INPUT = By.xpath(
+            "//div[@data-ti='input-root'][.//span[@data-ti='input-label' and contains(normalize-space(),'Город')]]//input[@data-ti='input']"
+    );
+    private static final By DATE_INPUT = By.xpath("//input[@data-ti='trip-dates']");
+    private static final By SUGGEST_CONTAINER = By.xpath("//div[@data-ti='dropdown-suggest-container']");
+    private static final By SUGGEST_ITEM = By.xpath("//div[@data-ti='dropdown-suggest-container']//div[@data-ti='dropdown-item']");
+    private static final By SUBMIT = By.xpath("//button[@data-ti='submit-button']");
+    private static final By CALENDAR = By.xpath("//*[@data-ti='calendar']");
 
     public HotelPage(WebDriver driver, WebDriverWait wait) {
-        super(driver, wait, Constants.HOTEL_URL);
-    }
-
-    @Override
-    public HotelPage open() {
-        super.open();
-        return this;
+        super(driver, wait, null);
     }
 
     public HotelPage fillDestination(String city) {
-        WebElement input = wait.until(ExpectedConditions.elementToBeClickable(DEST_INPUT));
-        input.click();
-        input.clear();
-        input.sendKeys(city);
-        By suggest = By.xpath(
-                "//*[@data-ti='dropdown-item' or contains(@class,'suggest') or contains(@class,'dropdown')]" +
-                        "//*[contains(text(),'" + city + "')]/ancestor::*[" +
-                        "@data-ti='dropdown-item' or contains(@class,'item')][1]"
-        );
+        WebElement inp = wait.until(ExpectedConditions.presenceOfElementLocated(DEST_INPUT));
+        ((JavascriptExecutor) driver).executeScript(
+                "arguments[0].scrollIntoView({block:'center'});", inp);
+        inp.click();
+        inp.sendKeys(city);
+        wait.until(ExpectedConditions.visibilityOfElementLocated(SUGGEST_CONTAINER));
+        wait.until(d -> {
+            List<WebElement> items = d.findElements(SUGGEST_ITEM);
+            return !items.isEmpty() && items.get(0).isDisplayed();
+        });
+        WebElement first = driver.findElements(SUGGEST_ITEM).get(0);
+        ((JavascriptExecutor) driver).executeScript("arguments[0].click();", first);
         try {
-            WebElement first = new WebDriverWait(driver, Duration.ofSeconds(8))
-                    .until(ExpectedConditions.elementToBeClickable(suggest));
-            ((JavascriptExecutor) driver).executeScript("arguments[0].click();", first);
+            new WebDriverWait(driver, Duration.ofSeconds(5))
+                    .until(ExpectedConditions.invisibilityOfElementLocated(SUGGEST_CONTAINER));
         } catch (Exception ignored) {
-            input.sendKeys(Keys.ENTER);
         }
+        wait.until(d -> {
+            String v = d.findElement(DEST_INPUT).getDomAttribute("value");
+            return v != null && !v.isEmpty();
+        });
         return this;
     }
 
@@ -53,43 +57,106 @@ public class HotelPage extends Page {
         LocalDate checkIn = DateUtils.plusDays(checkInDaysFromToday);
         LocalDate checkOut = checkIn.plusDays(nights);
 
-        WebElement dateField = wait.until(ExpectedConditions.elementToBeClickable(DATE_INPUT));
-        dateField.click();
+        WebElement dateInput = wait.until(ExpectedConditions.elementToBeClickable(DATE_INPUT));
+        ((JavascriptExecutor) driver).executeScript("arguments[0].click();", dateInput);
+        wait.until(ExpectedConditions.visibilityOfElementLocated(CALENDAR));
 
-        clickCalendarDay(checkIn);
-        clickCalendarDay(checkOut);
-
-        try {
-            new WebDriverWait(driver, Duration.ofSeconds(3))
-                    .until(d -> {
-                        String v = d.findElement(DATE_INPUT).getDomAttribute("value");
-                        return v != null && !v.isEmpty();
-                    });
-        } catch (Exception ignored) {
-        }
+        navigateCalendarToMonth(checkIn);
+        clickDayInVisibleMonth(checkIn);
+        navigateCalendarToMonth(checkOut);
+        clickDayInVisibleMonth(checkOut);
+        clickCalendarApply();
         return this;
     }
 
-    private void clickCalendarDay(LocalDate date) {
-        String iso = DateUtils.toDashFormat(date);
-        By cell = By.xpath(
-                "//*[@data-ti='calendar-cell-day-" + iso + "']" +
-                        " | //*[@data-day='" + iso + "']" +
-                        " | //div[@role='gridcell' and not(contains(@aria-disabled,'true'))]" +
-                        "[.//span[normalize-space()='" + date.getDayOfMonth() + "']]"
+    private void navigateCalendarToMonth(LocalDate target) {
+        String targetMonthRu = DateUtils.monthRu(target);
+        String targetYear = String.valueOf(target.getYear());
+        for (int i = 0; i < 24; i++) {
+            String currentMonth = readCalendarMonthTitle();
+            if (currentMonth.toLowerCase().contains(targetMonthRu.toLowerCase())
+                    && currentMonth.contains(targetYear)) {
+                return;
+            }
+            try {
+                WebElement next = driver.findElement(
+                        By.xpath("//button[@data-ti='calendar-month-header-next-button']"));
+                ((JavascriptExecutor) driver).executeScript("arguments[0].click();", next);
+                Thread.yield();
+            } catch (Exception ignored) {
+                return;
+            }
+        }
+    }
+
+    private String readCalendarMonthTitle() {
+        try {
+            return driver.findElement(
+                    By.xpath("//*[@data-ti='calendar-month-header-title']")).getText();
+        } catch (Exception e) {
+            return "";
+        }
+    }
+
+    private void clickDayInVisibleMonth(LocalDate target) {
+        long millis = target.atStartOfDay(ZoneId.of("Europe/Moscow")).toInstant().toEpochMilli();
+        By byEpoch = By.xpath(
+                "//*[@data-ti='calendar-day-cell' and @data-empty='false'" +
+                        " and @data-disabled='false' and @data-date='" + millis + "']"
+        );
+        By byDayText = By.xpath(
+                "(//*[@data-ti='calendar-day-cell' and @data-empty='false' and @data-disabled='false']" +
+                        "[.//span[contains(@class,'date_') and normalize-space()='" + target.getDayOfMonth() + "']])[1]"
         );
         try {
             WebElement el = new WebDriverWait(driver, Duration.ofSeconds(8))
-                    .until(ExpectedConditions.elementToBeClickable(cell));
+                    .until(d -> {
+                        for (By by : new By[]{byEpoch, byDayText}) {
+                            List<WebElement> els = d.findElements(by);
+                            for (WebElement e : els) {
+                                if (isDisplayedSafe(e)) return e;
+                            }
+                        }
+                        return null;
+                    });
             ((JavascriptExecutor) driver).executeScript("arguments[0].click();", el);
+        } catch (Exception ignored) {
+        }
+    }
+
+    private void clickCalendarApply() {
+        try {
+            WebElement btn = new WebDriverWait(driver, Duration.ofSeconds(5))
+                    .until(ExpectedConditions.elementToBeClickable(
+                            By.xpath("//button[@data-ti='calendar-popper-footer-select-button']")
+                    ));
+            ((JavascriptExecutor) driver).executeScript("arguments[0].click();", btn);
+        } catch (Exception ignored) {
+        }
+        try {
+            new WebDriverWait(driver, Duration.ofSeconds(5))
+                    .until(ExpectedConditions.invisibilityOfElementLocated(CALENDAR));
         } catch (Exception ignored) {
         }
     }
 
     public HotelResultsPage submit() {
         WebElement btn = wait.until(ExpectedConditions.elementToBeClickable(SUBMIT));
-        ((JavascriptExecutor) driver).executeScript("arguments[0].click();", btn);
+        ((JavascriptExecutor) driver).executeScript(
+                "arguments[0].scrollIntoView({block:'center'});", btn);
+        try {
+            btn.click();
+        } catch (Exception e) {
+            ((JavascriptExecutor) driver).executeScript("arguments[0].click();", btn);
+        }
         return new HotelResultsPage(driver, wait);
     }
 
+    private boolean isDisplayedSafe(WebElement el) {
+        try {
+            return el.isDisplayed();
+        } catch (Exception e) {
+            return false;
+        }
+    }
 }

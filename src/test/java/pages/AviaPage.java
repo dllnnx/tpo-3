@@ -6,7 +6,6 @@ import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.WebElement;
 import org.openqa.selenium.support.ui.ExpectedConditions;
 import org.openqa.selenium.support.ui.WebDriverWait;
-import utils.Constants;
 import utils.DateUtils;
 
 import java.time.Duration;
@@ -16,13 +15,6 @@ import java.util.List;
 
 public class AviaPage extends Page {
 
-    private static final By COOKIE_AGREE = By.xpath("//button[@data-ti='agree-button']");
-    private static final By FROM_WRAPPER = By.xpath(
-            "//div[@data-ti='input-root'][.//span[@data-ti='input-label' and normalize-space()='Откуда']]"
-    );
-    private static final By TO_WRAPPER = By.xpath(
-            "//div[@data-ti='input-root'][.//span[@data-ti='input-label' and normalize-space()='Куда']]"
-    );
     private static final By FROM_INPUT = By.xpath(
             "//div[@data-ti='input-root'][.//span[@data-ti='input-label' and normalize-space()='Откуда']]//input[@data-ti='input']"
     );
@@ -35,40 +27,18 @@ public class AviaPage extends Page {
     private static final By SUBMIT = By.xpath("//button[@data-ti='submit-button']");
 
     public AviaPage(WebDriver driver, WebDriverWait wait) {
-        super(driver, wait, Constants.AVIA_URL);
-    }
-
-    @Override
-    public AviaPage open() {
-        super.open();
-        dismissCookieBanner();
-        return this;
-    }
-
-    private void dismissCookieBanner() {
-        try {
-            List<WebElement> btns = driver.findElements(COOKIE_AGREE);
-            for (WebElement b : btns) {
-                if (isDisplayedSafe(b)) {
-                    ((JavascriptExecutor) driver).executeScript("arguments[0].click();", b);
-                    new WebDriverWait(driver, Duration.ofSeconds(3))
-                            .until(ExpectedConditions.invisibilityOfElementLocated(COOKIE_AGREE));
-                    break;
-                }
-            }
-        } catch (Exception ignored) {
-        }
+        super(driver, wait, null);
     }
 
     public AviaPage fillFrom(String city) {
-        return fillField(FROM_WRAPPER, FROM_INPUT, city);
+        return fillField(FROM_INPUT, city);
     }
 
     public AviaPage fillTo(String city) {
-        return fillField(TO_WRAPPER, TO_INPUT, city);
+        return fillField(TO_INPUT, city);
     }
 
-    private AviaPage fillField(By wrapper, By input, String city) {
+    private AviaPage fillField(By input, String city) {
         WebElement inp = wait.until(ExpectedConditions.presenceOfElementLocated(input));
         ((JavascriptExecutor) driver).executeScript(
                 "arguments[0].scrollIntoView({block:'center'});", inp);
@@ -99,7 +69,7 @@ public class AviaPage extends Page {
         ((JavascriptExecutor) driver).executeScript("arguments[0].click();", dateInput);
 
         wait.until(ExpectedConditions.visibilityOfElementLocated(
-                By.xpath("//*[@data-ti='calendar']")));
+                By.xpath("//*[@data-ti='suggest-container']")));
 
         navigateCalendarToMonth(target);
         clickDayInVisibleMonth(target);
@@ -188,30 +158,96 @@ public class AviaPage extends Page {
     }
 
     public AviaResultsPage submit() {
-        WebElement btn = wait.until(ExpectedConditions.elementToBeClickable(SUBMIT));
-        ((JavascriptExecutor) driver).executeScript(
-                "arguments[0].scrollIntoView({block:'center'});", btn);
-        try {
-            btn.click();
-        } catch (Exception e) {
-            ((JavascriptExecutor) driver).executeScript("arguments[0].click();", btn);
-        }
+        clickSubmitWithFallbacks();
         return new AviaResultsPage(driver, wait);
     }
 
     public boolean submitAndExpectNoNavigation() {
-        String oldUrl = driver.getCurrentUrl();
+        java.util.Set<String> oldHandles = new java.util.HashSet<>(driver.getWindowHandles());
         try {
             WebElement btn = driver.findElement(SUBMIT);
             ((JavascriptExecutor) driver).executeScript("arguments[0].click();", btn);
         } catch (Exception ignored) {
         }
+        switchToNewWindowIfAny(oldHandles, Duration.ofSeconds(3));
         try {
             new WebDriverWait(driver, Duration.ofSeconds(7))
                     .until(d -> d.getCurrentUrl().contains("/f/"));
             return false;
         } catch (Exception e) {
             return !driver.getCurrentUrl().contains("/f/");
+        }
+    }
+
+    private void clickSubmitWithFallbacks() {
+        java.util.Set<String> oldHandles = new java.util.HashSet<>(driver.getWindowHandles());
+        String oldUrl = safeUrl();
+        WebElement btn = wait.until(ExpectedConditions.elementToBeClickable(SUBMIT));
+        ((JavascriptExecutor) driver).executeScript(
+                "arguments[0].scrollIntoView({block:'center'});", btn);
+        try {
+            ((JavascriptExecutor) driver).executeScript(
+                    "document.querySelectorAll('iframe.tutu-chat-widget-iframe, " +
+                            "[class*=\"tutuSmart\"], [data-ti=\"disclaimer_wrapper\"], " +
+                            "[class*=\"chat-widget\"]').forEach(e => e.style.display = 'none');");
+        } catch (Exception ignored) {
+        }
+        try {
+            btn.click();
+        } catch (Exception e) {
+            ((JavascriptExecutor) driver).executeScript("arguments[0].click();", btn);
+        }
+        if (!waitForUrlChangeOrNewWindow(oldHandles, oldUrl, Duration.ofSeconds(5))) {
+            try {
+                ((JavascriptExecutor) driver).executeScript("arguments[0].click();", btn);
+            } catch (Exception ignored) {
+            }
+            waitForUrlChangeOrNewWindow(oldHandles, oldUrl, Duration.ofSeconds(8));
+        }
+        switchToNewWindowIfAny(oldHandles, Duration.ofSeconds(2));
+    }
+
+    private boolean waitForUrlChangeOrNewWindow(
+            java.util.Set<String> oldHandles, String oldUrl, Duration timeout) {
+        try {
+            new WebDriverWait(driver, timeout)
+                    .until(d -> {
+                        for (String h : d.getWindowHandles()) {
+                            if (!oldHandles.contains(h)) return true;
+                        }
+                        String cur = safeUrl();
+                        return cur != null && !cur.equals(oldUrl);
+                    });
+            return true;
+        } catch (Exception e) {
+            return false;
+        }
+    }
+
+    private void switchToNewWindowIfAny(java.util.Set<String> oldHandles, Duration timeout) {
+        try {
+            new WebDriverWait(driver, timeout)
+                    .until(d -> {
+                        for (String h : d.getWindowHandles()) {
+                            if (!oldHandles.contains(h)) return true;
+                        }
+                        return false;
+                    });
+            for (String h : driver.getWindowHandles()) {
+                if (!oldHandles.contains(h)) {
+                    driver.switchTo().window(h);
+                    break;
+                }
+            }
+        } catch (Exception ignored) {
+        }
+    }
+
+    private String safeUrl() {
+        try {
+            return driver.getCurrentUrl();
+        } catch (Exception e) {
+            return null;
         }
     }
 

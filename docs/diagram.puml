@@ -45,10 +45,6 @@ rectangle "tutu.ru" {
     usecase "UC-08\nРасписание\nэлектричек\nМосква → Мытищи" as UC08
   }
 
-  package "Аэроэкспрессы\naeroexpress.tutu.ru" {
-    usecase "UC-09\nРасписание\nаэроэкспрессов" as UC09
-  }
-
   package "Справочная\n/2read/" {
     usecase "UC-11\nПоиск\nв справочной" as UC11
   }
@@ -62,7 +58,6 @@ Guest --> UC05
 Guest --> UC06
 Guest --> UC07
 Guest --> UC08
-Guest --> UC09
 Guest --> UC10
 Guest --> UC11
 Guest --> UC12

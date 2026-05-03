@@ -5,6 +5,7 @@ import org.testng.Assert;
 import org.testng.annotations.Test;
 import pages.BusPage;
 import pages.BusResultsPage;
+import pages.HomePage;
 
 @SuppressWarnings("IllegalAllureIdUast")
 public class BusTest extends BaseTest {
@@ -16,10 +17,11 @@ public class BusTest extends BaseTest {
      */
     @Test(description = "UC-06: Поиск автобусов Москва → Тула")
     public void uc06_searchBusesMoscowTula() {
-        BusPage bus = new BusPage(driver, wait).open()
+        BusPage bus = new HomePage(driver, wait).open()
+                .clickBusTab()
                 .fillFrom("Москва")
                 .fillTo("Тула")
-                .pickTomorrow();
+                .pickDateInDays(1);
 
         BusResultsPage results = bus.submit();
         try {

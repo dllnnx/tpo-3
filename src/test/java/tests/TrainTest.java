@@ -4,7 +4,6 @@ import base.BaseTest;
 import org.testng.Assert;
 import org.testng.annotations.Test;
 import pages.HomePage;
-import pages.TrainPage;
 import pages.TrainResultsPage;
 
 
@@ -14,15 +13,13 @@ public class TrainTest extends BaseTest {
      * UC-01: Поиск ж/д билетов Москва → Санкт-Петербург с выбором даты.
      * Главная → клик по вкладке «Ж/д билеты» (URL остаётся главной, у submit
      * меняется текст на «Найти поезда») → Откуда=Москва → Куда=Санкт-Петербург →
-     * дата +30 дней (jQuery-UI datepicker) → Submit → редирект на /poezda/ с
-     * результатами → ассерт ≥ 4 карточек поездов, упоминания типов вагонов.
+     * дата +30 дней → Submit → редирект на /poezda/ с результатами →
+     * ассерт ≥ 4 карточек поездов, упоминания типов вагонов.
      */
     @Test(description = "UC-01: Поиск ж/д Москва → СПб с выбором даты")
     public void uc01_searchTrainsMoscowSpbWithDate() {
-        HomePage home = new HomePage(driver, wait).open()
-                .clickTrainTab();
-
-        TrainResultsPage results = home
+        TrainResultsPage results = new HomePage(driver, wait).open()
+                .clickTrainTab()
                 .fillFrom("Москв", "Москва")
                 .fillTo("Санкт-Пете", "Санкт-Петербург")
                 .pickDateInDays(30)
@@ -45,12 +42,13 @@ public class TrainTest extends BaseTest {
 
     /**
      * UC-02: Фильтр «Сапсан» на странице результатов ж/д.
-     * Поиск Москва → СПб → активация чипа Сапсан → ассерт что нет других типов поездов
-     * (Ласточка / Ночной экспресс) в видимых результатах.
+     * Главная → клик «Ж/д билеты» → поиск Москва → СПб → активация чипа Сапсан →
+     * ассерт что нет других типов поездов (Ласточка / Ночной экспресс) в видимых результатах.
      */
     @Test(description = "UC-02: Фильтр «Сапсан» в результатах ж/д")
     public void uc02_applySapsanFilter() {
-        TrainResultsPage results = new TrainPage(driver, wait).open()
+        TrainResultsPage results = new HomePage(driver, wait).open()
+                .clickTrainTab()
                 .fillFrom("Москв", "Москва")
                 .fillTo("Санкт-Пете", "Санкт-Петербург")
                 .pickDateInDays(20)
@@ -71,11 +69,13 @@ public class TrainTest extends BaseTest {
 
     /**
      * UC-03: Переключение даты в date-strip на странице результатов ж/д.
-     * Поиск → клик по соседней дате в date-strip → проверка изменения URL и наличия результатов.
+     * Главная → клик «Ж/д билеты» → поиск → клик по соседней дате в date-strip →
+     * проверка изменения URL и наличия результатов.
      */
     @Test(description = "UC-03: Переключение даты в date-strip результатов ж/д")
     public void uc03_changeDateInDateStrip() {
-        TrainResultsPage results = new TrainPage(driver, wait).open()
+        TrainResultsPage results = new HomePage(driver, wait).open()
+                .clickTrainTab()
                 .fillFrom("Москв", "Москва")
                 .fillTo("Санкт-Пете", "Санкт-Петербург")
                 .pickDateInDays(15)

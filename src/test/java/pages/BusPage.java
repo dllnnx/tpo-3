@@ -6,92 +6,166 @@ import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.WebElement;
 import org.openqa.selenium.support.ui.ExpectedConditions;
 import org.openqa.selenium.support.ui.WebDriverWait;
-import utils.Constants;
+import utils.DateUtils;
 
 import java.time.Duration;
+import java.time.LocalDate;
+import java.time.ZoneId;
 import java.util.List;
 
 public class BusPage extends Page {
 
-    private static final By FROM_INPUT = By.xpath("//input[@placeholder='Откуда']");
-    private static final By TO_INPUT = By.xpath("//input[@placeholder='Куда']");
-    private static final By DATE_INPUT = By.xpath("//input[@placeholder='Дата']");
-    private static final By SUBMIT = By.xpath("//button[normalize-space()='Найти билеты']");
-    private static final By START_CITY_HIDDEN = By.xpath("//input[@name='startCity']");
-    private static final By END_CITY_HIDDEN = By.xpath("//input[@name='endCity']");
+    private static final By FROM_INPUT = By.xpath(
+            "//div[@data-ti='input-root'][.//span[@data-ti='input-label' and normalize-space()='Откуда']]//input[@data-ti='input']"
+    );
+    private static final By TO_INPUT = By.xpath(
+            "//div[@data-ti='input-root'][.//span[@data-ti='input-label' and normalize-space()='Куда']]//input[@data-ti='input']"
+    );
+    private static final By DATE_INPUT = By.xpath("//input[@data-ti='trip-dates']");
+    private static final By SUGGEST_CONTAINER = By.xpath("//div[@data-ti='dropdown-suggest-container']");
+    private static final By SUGGEST_ITEM = By.xpath("//div[@data-ti='dropdown-suggest-container']//div[@data-ti='dropdown-item']");
+    private static final By SUBMIT = By.xpath("//button[@data-ti='submit-button']");
 
     public BusPage(WebDriver driver, WebDriverWait wait) {
-        super(driver, wait, Constants.BUS_URL);
-    }
-
-    @Override
-    public BusPage open() {
-        super.open();
-        return this;
+        super(driver, wait, null);
     }
 
     public BusPage fillFrom(String city) {
-        return fillCity(FROM_INPUT, city, START_CITY_HIDDEN);
+        return fillField(FROM_INPUT, city);
     }
 
     public BusPage fillTo(String city) {
-        return fillCity(TO_INPUT, city, END_CITY_HIDDEN);
+        return fillField(TO_INPUT, city);
     }
 
-    private BusPage fillCity(By input, String city, By hiddenIdInput) {
-        WebElement el = wait.until(ExpectedConditions.elementToBeClickable(input));
-        el.click();
-        el.sendKeys(city);
-        By suggest = By.xpath("//div[contains(@class,'styles__dropdown_item') and contains(., '" + city + "')]");
-        WebElement first = wait.until(d -> {
-            List<WebElement> items = d.findElements(suggest);
-            for (WebElement i : items) {
-                try {
-                    if (i.isDisplayed()) return i;
-                } catch (Exception ignored) {
-                }
-            }
-            return null;
+    private BusPage fillField(By input, String city) {
+        WebElement inp = wait.until(ExpectedConditions.presenceOfElementLocated(input));
+        ((JavascriptExecutor) driver).executeScript(
+                "arguments[0].scrollIntoView({block:'center'});", inp);
+        inp.click();
+        inp.sendKeys(city);
+        wait.until(ExpectedConditions.visibilityOfElementLocated(SUGGEST_CONTAINER));
+        wait.until(d -> {
+            List<WebElement> items = d.findElements(SUGGEST_ITEM);
+            return !items.isEmpty() && items.get(0).isDisplayed();
         });
+        WebElement first = driver.findElements(SUGGEST_ITEM).get(0);
         ((JavascriptExecutor) driver).executeScript("arguments[0].click();", first);
         try {
             new WebDriverWait(driver, Duration.ofSeconds(5))
-                    .until(d -> {
-                        try {
-                            String v = d.findElement(hiddenIdInput).getDomAttribute("value");
-                            return v != null && !v.isEmpty();
-                        } catch (Exception e) {
-                            return false;
-                        }
-                    });
+                    .until(ExpectedConditions.invisibilityOfElementLocated(SUGGEST_CONTAINER));
         } catch (Exception ignored) {
         }
+        wait.until(d -> {
+            String v = d.findElement(input).getDomAttribute("value");
+            return v != null && !v.isEmpty();
+        });
         return this;
     }
 
-    public BusPage pickTomorrow() {
-        WebElement dateField = wait.until(ExpectedConditions.elementToBeClickable(DATE_INPUT));
-        dateField.click();
-        By tomorrowChip = By.xpath(
-                "//button[normalize-space()='Завтра']" +
-                        " | //*[normalize-space(text())='Завтра']/ancestor::button[1]"
-        );
-        try {
-            WebElement tomorrow = wait.until(ExpectedConditions.elementToBeClickable(tomorrowChip));
-            ((JavascriptExecutor) driver).executeScript("arguments[0].click();", tomorrow);
-        } catch (Exception ignored) {
-            By anyEnabledDay = By.xpath("//td[not(contains(@class,'disabled'))]/a[string-length(normalize-space()) <= 2][2]");
+    public BusPage pickDateInDays(int daysFromToday) {
+        LocalDate target = DateUtils.plusDays(daysFromToday);
+        WebElement dateInput = wait.until(ExpectedConditions.elementToBeClickable(DATE_INPUT));
+        ((JavascriptExecutor) driver).executeScript("arguments[0].click();", dateInput);
+
+        wait.until(ExpectedConditions.visibilityOfElementLocated(
+                By.xpath("//*[@data-ti='calendar']")));
+
+        navigateCalendarToMonth(target);
+        clickDayInVisibleMonth(target);
+        clickCalendarApply();
+        return this;
+    }
+
+    private void navigateCalendarToMonth(LocalDate target) {
+        String targetMonthRu = DateUtils.monthRu(target);
+        String targetYear = String.valueOf(target.getYear());
+        for (int i = 0; i < 24; i++) {
+            String currentMonth = readCalendarMonthTitle();
+            if (currentMonth.toLowerCase().contains(targetMonthRu.toLowerCase())
+                    && currentMonth.contains(targetYear)) {
+                return;
+            }
             try {
-                WebElement day = driver.findElement(anyEnabledDay);
-                ((JavascriptExecutor) driver).executeScript("arguments[0].click();", day);
-            } catch (Exception ignored2) {
+                WebElement next = driver.findElement(
+                        By.xpath("//button[@data-ti='calendar-month-header-next-button']"));
+                ((JavascriptExecutor) driver).executeScript("arguments[0].click();", next);
+                Thread.yield();
+            } catch (Exception ignored) {
+                return;
             }
         }
-        return this;
+    }
+
+    private String readCalendarMonthTitle() {
+        try {
+            return driver.findElement(
+                    By.xpath("//*[@data-ti='calendar-month-header-title']")).getText();
+        } catch (Exception e) {
+            return "";
+        }
+    }
+
+    private void clickDayInVisibleMonth(LocalDate target) {
+        long millis = target.atStartOfDay(ZoneId.of("Europe/Moscow")).toInstant().toEpochMilli();
+        By byEpoch = By.xpath(
+                "//*[@data-ti='calendar-day-cell' and @data-empty='false'" +
+                        " and @data-disabled='false' and @data-date='" + millis + "']"
+        );
+        By byDayText = By.xpath(
+                "(//*[@data-ti='calendar-day-cell' and @data-empty='false' and @data-disabled='false']" +
+                        "[.//span[contains(@class,'date_') and normalize-space()='" + target.getDayOfMonth() + "']])[1]"
+        );
+        try {
+            WebElement el = new WebDriverWait(driver, Duration.ofSeconds(8))
+                    .until(d -> {
+                        for (By by : new By[]{byEpoch, byDayText}) {
+                            List<WebElement> els = d.findElements(by);
+                            for (WebElement e : els) {
+                                if (isDisplayedSafe(e)) return e;
+                            }
+                        }
+                        return null;
+                    });
+            ((JavascriptExecutor) driver).executeScript("arguments[0].click();", el);
+        } catch (Exception ignored) {
+        }
+    }
+
+    private void clickCalendarApply() {
+        try {
+            WebElement btn = new WebDriverWait(driver, Duration.ofSeconds(5))
+                    .until(ExpectedConditions.elementToBeClickable(
+                            By.xpath("//button[@data-ti='calendar-popper-footer-select-button']")
+                    ));
+            ((JavascriptExecutor) driver).executeScript("arguments[0].click();", btn);
+        } catch (Exception ignored) {
+        }
+        try {
+            new WebDriverWait(driver, Duration.ofSeconds(5))
+                    .until(ExpectedConditions.invisibilityOfElementLocated(
+                            By.xpath("//*[@data-ti='calendar']")));
+        } catch (Exception ignored) {
+        }
     }
 
     public BusResultsPage submit() {
-        wait.until(ExpectedConditions.elementToBeClickable(SUBMIT)).click();
+        WebElement btn = wait.until(ExpectedConditions.elementToBeClickable(SUBMIT));
+        ((JavascriptExecutor) driver).executeScript(
+                "arguments[0].scrollIntoView({block:'center'});", btn);
+        try {
+            btn.click();
+        } catch (Exception e) {
+            ((JavascriptExecutor) driver).executeScript("arguments[0].click();", btn);
+        }
         return new BusResultsPage(driver, wait);
+    }
+
+    private boolean isDisplayedSafe(WebElement el) {
+        try {
+            return el.isDisplayed();
+        } catch (Exception e) {
+            return false;
+        }
     }
 }
