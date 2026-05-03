@@ -7,7 +7,6 @@ import pages.HomePage;
 import pages.HotelPage;
 import pages.HotelResultsPage;
 
-@SuppressWarnings("IllegalAllureIdUast")
 public class HotelTest extends BaseTest {
 
     /**

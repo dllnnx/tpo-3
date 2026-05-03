@@ -7,7 +7,6 @@ import pages.BusPage;
 import pages.BusResultsPage;
 import pages.HomePage;
 
-@SuppressWarnings("IllegalAllureIdUast")
 public class BusTest extends BaseTest {
 
     /**
