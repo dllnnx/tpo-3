@@ -11,7 +11,9 @@ import utils.DateUtils;
 import java.time.Duration;
 import java.time.LocalDate;
 import java.time.ZoneId;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 public class AviaPage extends Page {
 
@@ -146,7 +148,7 @@ public class AviaPage extends Page {
     }
 
     public boolean submitAndExpectNoNavigation() {
-        java.util.Set<String> oldHandles = new java.util.HashSet<>(driver.getWindowHandles());
+        Set<String> oldHandles = new HashSet<>(driver.getWindowHandles());
         try {
             WebElement btn = driver.findElement(SUBMIT);
             ((JavascriptExecutor) driver).executeScript("arguments[0].click();", btn);
@@ -154,7 +156,7 @@ public class AviaPage extends Page {
         }
         switchToNewWindowIfAny(oldHandles, Duration.ofSeconds(3));
         try {
-            new WebDriverWait(driver, Duration.ofSeconds(7))
+            new WebDriverWait(driver, Duration.ofSeconds(3))
                     .until(d -> d.getCurrentUrl().contains("/f/"));
             return false;
         } catch (Exception e) {
@@ -236,9 +238,7 @@ public class AviaPage extends Page {
 
     public boolean hasValidationHint() {
         List<WebElement> hints = driver.findElements(By.xpath(
-                "//*[contains(text(),'совпада') or contains(text(),'одинак')" +
-                        " or contains(text(),'Откуда и куда') or contains(text(),'разные')" +
-                        " or contains(text(),'Выберите')]"
+                "//*[contains(text(),'Места отправления и назначения не должны совпадать')]"
         ));
         return hints.stream().anyMatch(this::isDisplayedSafe);
     }

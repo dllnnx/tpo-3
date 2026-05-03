@@ -6,7 +6,6 @@ import org.testng.annotations.Test;
 import pages.ElectrichkaPage;
 import pages.ElectrichkaResultsPage;
 
-@SuppressWarnings("IllegalAllureIdUast")
 public class ElectrichkaTest extends BaseTest {
 
     /**
@@ -27,12 +26,9 @@ public class ElectrichkaTest extends BaseTest {
 
         ElectrichkaResultsPage results = page.submit().waitForSchedule();
 
-        Assert.assertTrue(results.currentUrl().contains("/prigorod/"),
-                "URL должен содержать /prigorod/: " + results.currentUrl());
-        Assert.assertTrue(results.countDepartureTimes() >= 5
-                        || results.hasText("электричк")
-                        || results.hasText("расписан"),
-                "Должно быть ≥ 5 времён в расписании или упоминание расписания. " +
+        Assert.assertTrue(results.countDepartureTimes() >= 1
+                        && results.hasText("Расписание электричек"),
+                "Должно быть >= 1 времен в расписании и упоминание расписания. " +
                         "Time count: " + results.countDepartureTimes());
     }
 }

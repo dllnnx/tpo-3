@@ -20,7 +20,7 @@ public class ElectrichkaResultsPage extends Page {
 
     public ElectrichkaResultsPage waitForSchedule() {
         WebDriverWait longWait = new WebDriverWait(driver, Duration.ofSeconds(45), Duration.ofMillis(500));
-        longWait.until(d -> d.getCurrentUrl().contains("/prigorod/"));
+        longWait.until(d -> !d.getCurrentUrl().contains("/prigorod/"));
         longWait.until(d -> countDepartureTimes() >= 1
                 || hasText("Расписание")
                 || hasText("электричк")
@@ -31,8 +31,7 @@ public class ElectrichkaResultsPage extends Page {
 
     public int countDepartureTimes() {
         List<WebElement> candidates = driver.findElements(By.xpath(
-                "//span[contains(text(),':') and string-length(normalize-space())=5]" +
-                        " | //td[contains(text(),':') and string-length(normalize-space())=5]"
+                "//a[contains(text(), ':') and string-length(normalize-space())=5]"
         ));
         return (int) candidates.stream()
                 .filter(this::isDisplayedSafe)
@@ -44,7 +43,7 @@ public class ElectrichkaResultsPage extends Page {
     }
 
     public boolean hasText(String keyword) {
-        return driver.findElements(By.xpath("//*[contains(text(),\"" + keyword + "\")]"))
+        return driver.findElements(By.xpath("//*[contains(., \"" + keyword + "\")]"))
                 .stream().anyMatch(this::isDisplayedSafe);
     }
 

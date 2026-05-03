@@ -104,24 +104,7 @@ public class HotelPage extends Page {
                 "//*[@data-ti='calendar-day-cell' and @data-empty='false'" +
                         " and @data-disabled='false' and @data-date='" + millis + "']"
         );
-        By byDayText = By.xpath(
-                "(//*[@data-ti='calendar-day-cell' and @data-empty='false' and @data-disabled='false']" +
-                        "[.//span[contains(@class,'date_') and normalize-space()='" + target.getDayOfMonth() + "']])[1]"
-        );
-        try {
-            WebElement el = new WebDriverWait(driver, Duration.ofSeconds(8))
-                    .until(d -> {
-                        for (By by : new By[]{byEpoch, byDayText}) {
-                            List<WebElement> els = d.findElements(by);
-                            for (WebElement e : els) {
-                                if (isDisplayedSafe(e)) return e;
-                            }
-                        }
-                        return null;
-                    });
-            ((JavascriptExecutor) driver).executeScript("arguments[0].click();", el);
-        } catch (Exception ignored) {
-        }
+        driver.findElements(byEpoch).get(0).click();
     }
 
     private void clickCalendarApply() {

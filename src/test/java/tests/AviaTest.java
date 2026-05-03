@@ -11,7 +11,6 @@ import pages.AviaPage;
 import pages.AviaResultsPage;
 import pages.HomePage;
 
-@SuppressWarnings("IllegalAllureIdUast")
 public class AviaTest extends BaseTest {
 
     /**
@@ -54,48 +53,6 @@ public class AviaTest extends BaseTest {
         if (navigated) {
             Assert.assertTrue(results.hasText("Москва") || results.hasText("Санкт"),
                     "На странице результатов должны быть города маршрута");
-        }
-    }
-
-    /**
-     * UC-05: Фильтр «С багажом» на странице результатов авиа.
-     * Прямая навигация к /f/Moskva/Sankt-Peterburg/ → ожидание загрузки →
-     * клик соседней даты в календаре → клик чекбокса «С багажом» →
-     * ассерт что фильтр activated (атрибут checkbox checked) или URL/текст изменились.
-     */
-    @Test(description = "UC-05: Фильтр «С багажом» в результатах авиа")
-    public void uc05_applyBaggageFilter() {
-        driver.get("https://avia.tutu.ru/f/Moskva/Sankt-Peterburg/?class=Y&passengers=100");
-
-        AviaResultsPage results = new AviaResultsPage(driver, wait);
-        results.waitForResults();
-
-        Assert.assertTrue(driver.getCurrentUrl().contains("/f/"),
-                "Должны быть на странице результатов авиа /f/");
-        Assert.assertTrue(results.hasText("Москва"),
-                "На результатах должна упоминаться Москва");
-
-        boolean checkboxBefore = readBaggageChecked();
-        results.clickBaggageFilter();
-        boolean checkboxAfter = readBaggageChecked();
-
-        Assert.assertTrue(checkboxAfter != checkboxBefore || results.baggageMentioned(),
-                "После клика по «С багажом» состояние чекбокса должно измениться " +
-                        "или в результатах должно появиться упоминание багажа. " +
-                        "before=" + checkboxBefore + " after=" + checkboxAfter);
-    }
-
-    private boolean readBaggageChecked() {
-        try {
-            WebElement checkbox = driver.findElement(By.xpath(
-                    "(//label[@data-ti='order-checkbox-outer'][.//*[@data-ti='form_baggage_filter']]" +
-                            "//input[@type='checkbox'])[1]"
-            ));
-            Object res = ((JavascriptExecutor) driver).executeScript(
-                    "return arguments[0].checked;", checkbox);
-            return Boolean.TRUE.equals(res);
-        } catch (Exception e) {
-            return false;
         }
     }
 

@@ -14,10 +14,10 @@ import java.util.List;
 public class ElectrichkaPage extends Page {
 
     private static final By FROM_INPUT = By.xpath(
-            "(//label[normalize-space()='Откуда']/following::input[@type='text'])[1]"
+            "//label[.//span[text()='Откуда']]//input"
     );
     private static final By TO_INPUT = By.xpath(
-            "(//label[normalize-space()='Куда']/following::input[@type='text'])[1]"
+            "//label[.//span[text()='Куда']]//input"
     );
     private static final By SUBMIT = By.xpath("//button[@data-ti='submit-button']");
 
@@ -77,7 +77,8 @@ public class ElectrichkaPage extends Page {
         try {
             WebElement first = new WebDriverWait(driver, Duration.ofSeconds(5))
                     .until(ExpectedConditions.elementToBeClickable(suggest));
-            ((JavascriptExecutor) driver).executeScript("arguments[0].click();", first);
+//            ((JavascriptExecutor) driver).executeScript("arguments[0].click();", first);
+            driver.findElements(suggest).get(0).click();
         } catch (Exception ignored) {
         }
     }
