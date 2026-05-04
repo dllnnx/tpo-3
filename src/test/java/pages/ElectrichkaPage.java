@@ -16,6 +16,8 @@ public class ElectrichkaPage extends Page {
     private static final By TO_INPUT = By.xpath("//label[.//span[text()='Куда']]//input");
     private static final By SUBMIT = By.xpath("//button[@data-ti='submit-button']");
 
+    private static final By SUGGEST_ITEM = By.xpath("//*[@data-ti='dropdown-item']");
+
     public ElectrichkaPage(WebDriver driver, WebDriverWait wait) {
         super(driver, wait, Constants.ELECTRICHKA_URL);
     }
@@ -28,10 +30,12 @@ public class ElectrichkaPage extends Page {
 
     public boolean isFormPrefilledWithDefaults() {
         try {
-            new WebDriverWait(driver, Duration.ofSeconds(15))
-                    .until(ExpectedConditions.presenceOfElementLocated(SUBMIT));
+            WebDriverWait longWait = new WebDriverWait(driver, Duration.ofSeconds(15));
+            longWait.until(ExpectedConditions.presenceOfElementLocated(SUBMIT));
+
             String fromVal = driver.findElement(FROM_INPUT).getDomAttribute("value");
             String toVal = driver.findElement(TO_INPUT).getDomAttribute("value");
+
             return fromVal != null && !fromVal.isEmpty()
                     && toVal != null && !toVal.isEmpty();
         } catch (Exception e) {
@@ -42,50 +46,73 @@ public class ElectrichkaPage extends Page {
     public ElectrichkaPage fillFromIfEmpty(String city) {
         WebElement input = wait.until(ExpectedConditions.elementToBeClickable(FROM_INPUT));
         String existing = input.getDomAttribute("value");
+
         if (existing != null && !existing.isEmpty()) {
             return this;
         }
+
         input.click();
         input.sendKeys(city);
-        clickFirstSuggest(city);
+        selectSuggestion(FROM_INPUT, city);
         return this;
     }
 
     public ElectrichkaPage fillToIfEmpty(String city) {
         WebElement input = wait.until(ExpectedConditions.elementToBeClickable(TO_INPUT));
+
         String existing = input.getDomAttribute("value");
         if (existing != null && !existing.isEmpty()) {
             return this;
         }
+
         input.click();
+        input.clear();
         input.sendKeys(city);
-        clickFirstSuggest(city);
+
+        selectSuggestion(TO_INPUT, city);
+
         return this;
     }
 
-    private void clickFirstSuggest(String city) {
-        By suggest = By.xpath(
-                "//*[@data-ti='dropdown-item' or contains(@class,'suggest')]" +
-                        "//*[contains(text(),'" + city + "')]/ancestor-or-self::*[" +
-                        "@data-ti='dropdown-item' or contains(@class,'item')][1]"
-        );
-        try {
-            WebElement first = new WebDriverWait(driver, Duration.ofSeconds(5))
-                    .until(ExpectedConditions.elementToBeClickable(suggest));
-            driver.findElements(suggest).get(0).click();
-        } catch (Exception ignored) {
-        }
+    private void selectSuggestion(By inputLocator, String city) {
+
+        WebElement matched = wait.until(driver -> {
+            var items = driver.findElements(SUGGEST_ITEM);
+            for (WebElement el : items) {
+                try {
+                    if (el.isDisplayed() &&
+                            el.getText() != null &&
+                            el.getText().toLowerCase().contains(city.toLowerCase())) {
+                        return el;
+                    }
+                } catch (Exception ignored) {}
+            }
+            return null;
+        });
+
+        matched.click();
+
+        // Wait until input value is updated
+        wait.until(d -> {
+            String value = d.findElement(inputLocator).getDomAttribute("value");
+            return value != null &&
+                    value.toLowerCase().contains(city.toLowerCase());
+        });
     }
 
     public ElectrichkaResultsPage submit() {
         WebElement btn = wait.until(ExpectedConditions.presenceOfElementLocated(SUBMIT));
         ((JavascriptExecutor) driver).executeScript(
                 "arguments[0].scrollIntoView({block:'center'});", btn);
+
+        // Wait for button to be clickable (non-critical, continue if timeout)
         try {
-            new WebDriverWait(driver, Duration.ofSeconds(8))
-                    .until(ExpectedConditions.elementToBeClickable(SUBMIT));
-        } catch (Exception ignored) {
+            WebDriverWait shortWait = new WebDriverWait(driver, Duration.ofSeconds(5));
+            shortWait.until(ExpectedConditions.elementToBeClickable(SUBMIT));
+        } catch (Exception e) {
+            // Continue with click even if elementToBeClickable times out
         }
+
         ((JavascriptExecutor) driver).executeScript("arguments[0].click();", btn);
         return new ElectrichkaResultsPage(driver, wait);
     }

@@ -20,59 +20,89 @@ public abstract class BaseFormPage extends Page {
     protected static final By SUBMIT = By.xpath("//button[@data-ti='submit-button']");
     protected static final By CALENDAR = By.xpath("//*[@data-ti='calendar']");
 
+    private static final By CALENDAR_NEXT_BUTTON = By.xpath("//button[@data-ti='calendar-month-header-next-button']");
+
+    private static final By CALENDAR_MONTH_TITLE = By.xpath("//*[@data-ti='calendar-month-header-title']");
+
+    private static final By CALENDAR_APPLY_BUTTON = By.xpath("//button[@data-ti='calendar-popper-footer-select-button']");
+
+    private static final int MAX_CALENDAR_NAVIGATIONS = 24;
+
     protected BaseFormPage(WebDriver driver, WebDriverWait wait, String url) {
         super(driver, wait, url);
     }
 
     protected WebElement fillField(By input, String city) {
-        WebElement inp = wait.until(ExpectedConditions.presenceOfElementLocated(input));
-        ((JavascriptExecutor) driver).executeScript(
-                "arguments[0].scrollIntoView({block:'center'});", inp);
+        WebElement inp = wait.until(ExpectedConditions.elementToBeClickable(input));
+
+        ((JavascriptExecutor) driver).executeScript("arguments[0].scrollIntoView({block:'center'});", inp);
+
         inp.click();
+        inp.clear();
         inp.sendKeys(city);
+
+        // Wait until suggestions appear
         wait.until(ExpectedConditions.visibilityOfElementLocated(SUGGEST_CONTAINER));
-        wait.until(d -> {
-            List<WebElement> items = d.findElements(SUGGEST_ITEM);
-            return !items.isEmpty() && items.get(0).isDisplayed();
+
+        // Wait until at least one suggestion matches text
+        WebElement matchedSuggestion = wait.until(driver -> {
+            List<WebElement> items = driver.findElements(SUGGEST_ITEM);
+            for (WebElement el : items) {
+                try {
+                    String text = el.getText();
+                    if (el.isDisplayed() &&
+                            text != null &&
+                            text.toLowerCase().contains(city.toLowerCase())) {
+                        return el;
+                    }
+                } catch (Exception ignored) {}
+            }
+            return null;
         });
-        WebElement first = driver.findElements(SUGGEST_ITEM).get(0);
-        ((JavascriptExecutor) driver).executeScript("arguments[0].click();", first);
-        try {
-            new WebDriverWait(driver, Duration.ofSeconds(5))
-                    .until(ExpectedConditions.invisibilityOfElementLocated(SUGGEST_CONTAINER));
-        } catch (Exception ignored) {
-        }
+
+        wait.until(ExpectedConditions.elementToBeClickable(matchedSuggestion));
+        matchedSuggestion.click();
+
+        // Wait until input value stabilizes and contains expected city
         wait.until(d -> {
-            String v = d.findElement(input).getDomAttribute("value");
-            return v != null && !v.isEmpty();
+            String value = d.findElement(input).getDomAttribute("value");
+            return value != null &&
+                    value.toLowerCase().contains(city.toLowerCase());
         });
+
         return inp;
     }
 
     protected void navigateCalendarToMonth(LocalDate target) {
         String targetMonthRu = DateUtils.monthRu(target);
         String targetYear = String.valueOf(target.getYear());
-        for (int i = 0; i < 24; i++) {
+
+        for (int i = 0; i < MAX_CALENDAR_NAVIGATIONS; i++) {
             String currentMonth = readCalendarMonthTitle();
-            if (currentMonth.toLowerCase().contains(targetMonthRu.toLowerCase())
+            if (currentMonth != null
+                    && currentMonth.toLowerCase().contains(targetMonthRu.toLowerCase())
                     && currentMonth.contains(targetYear)) {
                 return;
             }
+
+            WebElement nextButton = driver.findElement(CALENDAR_NEXT_BUTTON);
+            ((JavascriptExecutor) driver).executeScript("arguments[0].click();", nextButton);
+
             try {
-                WebElement next = driver.findElement(
-                        By.xpath("//button[@data-ti='calendar-month-header-next-button']"));
-                ((JavascriptExecutor) driver).executeScript("arguments[0].click();", next);
-                Thread.yield();
-            } catch (Exception ignored) {
-                return;
+                WebDriverWait shortWait = new WebDriverWait(driver, Duration.ofSeconds(2));
+                shortWait.until(d -> {
+                    String newMonth = d.findElement(CALENDAR_MONTH_TITLE).getText();
+                    return !newMonth.equals(currentMonth);
+                });
+            } catch (Exception e) {
+                // if calendar doesn't update, try next iteration
             }
         }
     }
 
     protected String readCalendarMonthTitle() {
         try {
-            return driver.findElement(
-                    By.xpath("//*[@data-ti='calendar-month-header-title']")).getText();
+            return driver.findElement(CALENDAR_MONTH_TITLE).getText();
         } catch (Exception e) {
             return "";
         }
@@ -89,17 +119,17 @@ public abstract class BaseFormPage extends Page {
 
     protected void clickCalendarApply() {
         try {
-            WebElement btn = new WebDriverWait(driver, Duration.ofSeconds(5))
-                    .until(ExpectedConditions.elementToBeClickable(
-                            By.xpath("//button[@data-ti='calendar-popper-footer-select-button']")
-                    ));
+            WebDriverWait shortWait = new WebDriverWait(driver, Duration.ofSeconds(3));
+            WebElement btn = shortWait.until(ExpectedConditions.elementToBeClickable(CALENDAR_APPLY_BUTTON));
             ((JavascriptExecutor) driver).executeScript("arguments[0].click();", btn);
-        } catch (Exception ignored) {
-        }
-        try {
-            new WebDriverWait(driver, Duration.ofSeconds(5))
-                    .until(ExpectedConditions.invisibilityOfElementLocated(CALENDAR));
-        } catch (Exception ignored) {
+
+            try {
+                shortWait.until(ExpectedConditions.invisibilityOfElementLocated(CALENDAR));
+            } catch (Exception e) {
+                // Continue even if calendar doesn't close immediately
+            }
+        } catch (Exception e) {
+            // If apply button not found, day selection may be auto-applied
         }
     }
 
@@ -107,6 +137,7 @@ public abstract class BaseFormPage extends Page {
         WebElement btn = wait.until(ExpectedConditions.elementToBeClickable(SUBMIT));
         ((JavascriptExecutor) driver).executeScript(
                 "arguments[0].scrollIntoView({block:'center'});", btn);
+
         try {
             btn.click();
         } catch (Exception e) {

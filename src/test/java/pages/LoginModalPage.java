@@ -27,8 +27,8 @@ public class LoginModalPage extends Page {
     }
 
     public LoginModalPage waitForVisible() {
-        new WebDriverWait(driver, Duration.ofSeconds(15))
-                .until(d -> getVisibleEmailInput() != null);
+        WebDriverWait longWait = new WebDriverWait(driver, Duration.ofSeconds(15));
+        longWait.until(d -> getVisibleEmailInput() != null);
         return this;
     }
 
@@ -37,12 +37,14 @@ public class LoginModalPage extends Page {
     }
 
     private WebElement getVisibleEmailInput() {
-        for (WebElement el : driver.findElements(EMAIL_INPUT)) {
+        List<WebElement> inputs = driver.findElements(EMAIL_INPUT);
+        for (WebElement el : inputs) {
             try {
                 if (el.isDisplayed() && el.isEnabled()) {
                     return el;
                 }
-            } catch (Exception ignored) {
+            } catch (Exception e) {
+                // Element not visible or interactable, try next
             }
         }
         return null;
@@ -52,11 +54,16 @@ public class LoginModalPage extends Page {
         WebElement input = wait.until(d -> getVisibleEmailInput());
         ((JavascriptExecutor) driver).executeScript(
                 "arguments[0].scrollIntoView({block:'center'});", input);
+
         input.click();
+
+        // Clear existing value (non-critical, continue if fails)
         try {
             input.clear();
-        } catch (Exception ignored) {
+        } catch (Exception e) {
+            // Some input types don't support clear, will be overwritten by sendKeys
         }
+
         input.sendKeys(email);
         return this;
     }
@@ -70,25 +77,29 @@ public class LoginModalPage extends Page {
         try {
             WebElement btn = wait.until(ExpectedConditions.elementToBeClickable(NEXT_BUTTON));
             ((JavascriptExecutor) driver).executeScript("arguments[0].click();", btn);
-        } catch (Exception ignored) {
+        } catch (Exception e) {
+            // Button click failed - may be due to modal state or overlay
         }
         return this;
     }
 
     public boolean codeStepReached() {
         try {
-            new WebDriverWait(driver, Duration.ofSeconds(15)).until(d ->
+            WebDriverWait longWait = new WebDriverWait(driver, Duration.ofSeconds(15));
+            longWait.until(d ->
                     !d.findElements(By.xpath(
                             "//*[contains(text(),'код') or contains(text(),'Код') or contains(text(),'Введите')]"
                     )).isEmpty()
             );
+
             List<WebElement> indicators = driver.findElements(By.xpath(
                     "//*[contains(text(),'код') or contains(text(),'Код') or contains(text(),'Введите')]"
             ));
+
             return indicators.stream().anyMatch(e -> {
                 try {
                     return e.isDisplayed();
-                } catch (Exception x) {
+                } catch (Exception ex) {
                     return false;
                 }
             });

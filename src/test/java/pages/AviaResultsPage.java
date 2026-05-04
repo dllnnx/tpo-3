@@ -19,12 +19,14 @@ public class AviaResultsPage extends Page {
     );
     private static final Pattern HHMM = Pattern.compile("^\\d{2}:\\d{2}$");
 
+    private static final Duration RESULTS_TIMEOUT = Duration.ofSeconds(50);
+
     public AviaResultsPage(WebDriver driver, WebDriverWait wait) {
         super(driver, wait, null);
     }
 
     public AviaResultsPage waitForResults() {
-        WebDriverWait longWait = new WebDriverWait(driver, Duration.ofSeconds(50), Duration.ofMillis(500));
+        WebDriverWait longWait = new WebDriverWait(driver, RESULTS_TIMEOUT, Duration.ofMillis(500));
         longWait.until(ExpectedConditions.urlContains("/f/"));
         longWait.until(d -> countDepartureTimes() >= 1
                 || hasText("Авиабилеты")
@@ -36,17 +38,21 @@ public class AviaResultsPage extends Page {
         List<WebElement> candidates = driver.findElements(By.xpath(
                 "//span[contains(text(),':') and string-length(normalize-space())=5]"
         ));
-        return (int) candidates.stream()
-                .filter(this::isDisplayedSafe)
-                .map(e -> {
-                    try {
-                        return e.getText().trim();
-                    } catch (Exception x) {
-                        return "";
+
+        int count = 0;
+        for (WebElement el : candidates) {
+            if (isDisplayedSafe(el)) {
+                try {
+                    String text = el.getText().trim();
+                    if (HHMM.matcher(text).matches()) {
+                        count++;
                     }
-                })
-                .filter(t -> HHMM.matcher(t).matches())
-                .count();
+                } catch (Exception e) {
+                    // Skip elements that can't be read
+                }
+            }
+        }
+        return count;
     }
 
     public int countFlightCards() {
@@ -54,37 +60,52 @@ public class AviaResultsPage extends Page {
     }
 
     public boolean hasText(String keyword) {
-        return driver.findElements(By.xpath("//*[contains(text(),\"" + keyword + "\")]"))
-                .stream().anyMatch(this::isDisplayedSafe);
+        List<WebElement> elements = driver.findElements(By.xpath("//*[contains(text(),\"" + keyword + "\")]"));
+        for (WebElement el : elements) {
+            if (isDisplayedSafe(el)) {
+                return true;
+            }
+        }
+        return false;
     }
 
     public boolean hasAirlineName() {
         String[] airlines = {"Аэрофлот", "S7", "Победа", "Россия", "Utair", "Etihad", "Qatar", "Lufthansa", "Aer", "Турки"};
-        for (String a : airlines) {
-            if (hasText(a)) return true;
+        for (String airline : airlines) {
+            if (hasText(airline)) {
+                return true;
+            }
         }
         return false;
     }
 
     public boolean hasPriceFormat() {
-        return driver.findElements(By.xpath("//*[contains(text(),'₽')]"))
-                .stream().anyMatch(this::isDisplayedSafe);
+        List<WebElement> priceElements = driver.findElements(By.xpath("//*[contains(text(),'₽')]"));
+        for (WebElement el : priceElements) {
+            if (isDisplayedSafe(el)) {
+                return true;
+            }
+        }
+        return false;
     }
-
     public AviaResultsPage clickBaggageFilter() {
         wait.until(ExpectedConditions.presenceOfElementLocated(FILTER_BAGGAGE));
         WebElement chip = driver.findElement(FILTER_BAGGAGE);
         ((JavascriptExecutor) driver).executeScript(
                 "arguments[0].scrollIntoView({block:'center'});", chip);
-        new WebDriverWait(driver, Duration.ofSeconds(8))
-                .until(ExpectedConditions.elementToBeClickable(FILTER_BAGGAGE));
+
+        WebDriverWait clickWait = new WebDriverWait(driver, Duration.ofSeconds(8));
+        clickWait.until(ExpectedConditions.elementToBeClickable(FILTER_BAGGAGE));
         ((JavascriptExecutor) driver).executeScript("arguments[0].click();", chip);
+
+        // Wait for filter effect (non-critical, continue if timeout)
         try {
-            new WebDriverWait(driver, Duration.ofSeconds(8))
-                    .until(d -> d.getCurrentUrl().contains("baggage")
-                            || hasText("С багажом"));
-        } catch (Exception ignored) {
+            WebDriverWait filterWait = new WebDriverWait(driver, Duration.ofSeconds(8));
+            filterWait.until(d -> d.getCurrentUrl().contains("baggage") || hasText("С багажом"));
+        } catch (Exception e) {
+            // Filter may still be applied even if URL/text doesn't update immediately
         }
+
         return this;
     }
 

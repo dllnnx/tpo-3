@@ -27,55 +27,45 @@ public class TrainPage extends BaseFormPage {
     }
 
     public TrainPage fillFrom(String prefix, String exactCity) {
-        return fillField(FROM_INPUT, prefix, exactCity);
+        fillFieldWithExactText(FROM_INPUT, prefix, exactCity);
+        return this;
     }
 
     public TrainPage fillTo(String prefix, String exactCity) {
-        return fillField(TO_INPUT, prefix, exactCity);
+        fillFieldWithExactText(TO_INPUT, prefix, exactCity);
+        return this;
     }
 
-    private TrainPage fillField(By input, String prefix, String exactCity) {
-        WebElement inp = wait.until(ExpectedConditions.presenceOfElementLocated(input));
-        ((JavascriptExecutor) driver).executeScript(
-                "arguments[0].scrollIntoView({block:'center'});", inp);
-        inp.click();
-        inp.sendKeys(prefix);
-        wait.until(ExpectedConditions.visibilityOfElementLocated(SUGGEST_CONTAINER));
+    private void fillFieldWithExactText(By inputLocator, String prefix, String exactCity) {
 
-        By exactItem = By.xpath(
-                "//div[@data-ti='dropdown-suggest-container']//div[@data-ti='dropdown-item']" +
-                        "[.//*[normalize-space()='" + exactCity + "']]"
-        );
-        WebElement target = null;
-        try {
-            target = new WebDriverWait(driver, Duration.ofSeconds(5))
-                    .until(d -> {
-                        List<WebElement> exact = d.findElements(exactItem);
-                        for (WebElement e : exact) {
-                            if (isDisplayedSafe(e)) return e;
-                        }
-                        return null;
-                    });
-        } catch (Exception ignored) {
-        }
-        if (target == null) {
-            wait.until(d -> {
-                List<WebElement> items = d.findElements(SUGGEST_ITEM);
-                return !items.isEmpty() && items.get(0).isDisplayed();
-            });
-            target = driver.findElements(SUGGEST_ITEM).get(0);
-        }
-        ((JavascriptExecutor) driver).executeScript("arguments[0].click();", target);
-        try {
-            new WebDriverWait(driver, Duration.ofSeconds(5))
-                    .until(ExpectedConditions.invisibilityOfElementLocated(SUGGEST_CONTAINER));
-        } catch (Exception ignored) {
-        }
-        wait.until(d -> {
-            String v = d.findElement(input).getDomAttribute("value");
-            return v != null && !v.isEmpty();
+        WebElement input = wait.until(ExpectedConditions.elementToBeClickable(inputLocator));
+
+        driver.findElements(inputLocator).get(0).click();
+        input.click();
+        input.clear();
+        input.sendKeys(prefix);
+
+        WebElement matched = wait.until(driver -> {
+            List<WebElement> items = driver.findElements(SUGGEST_ITEM);
+
+            for (WebElement el : items) {
+                if (!el.isDisplayed()) continue;
+
+                String text = el.getText();
+                if (text != null && text.toLowerCase().contains(exactCity.toLowerCase())) {
+                    return el;
+                }
+            }
+            return null;
         });
-        return this;
+
+        matched.click();
+
+        wait.until(d -> {
+            String value = d.findElement(inputLocator).getDomAttribute("value");
+            return value != null &&
+                    value.toLowerCase().contains(exactCity.toLowerCase());
+        });
     }
 
     public TrainPage pickDateInDays(int daysFromToday) {

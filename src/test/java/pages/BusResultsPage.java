@@ -13,12 +13,14 @@ public class BusResultsPage extends Page {
 
     private static final Pattern HHMM = Pattern.compile("^\\d{2}:\\d{2}$");
 
+    private static final Duration RESULTS_TIMEOUT = Duration.ofSeconds(45);
+
     public BusResultsPage(WebDriver driver, WebDriverWait wait) {
         super(driver, wait, null);
     }
 
     public BusResultsPage waitForResults() {
-        WebDriverWait longWait = new WebDriverWait(driver, Duration.ofSeconds(45), Duration.ofMillis(500));
+        WebDriverWait longWait = new WebDriverWait(driver, RESULTS_TIMEOUT, Duration.ofMillis(500));
         longWait.until(d -> d.getCurrentUrl().contains("bus.tutu.ru") || d.getCurrentUrl().contains("/avtobus"));
         longWait.until(d -> countDepartureTimes() >= 1 || hasText("автобус"));
         return this;
@@ -28,27 +30,41 @@ public class BusResultsPage extends Page {
         List<WebElement> candidates = driver.findElements(By.xpath(
                 "//span[contains(text(),':') and string-length(normalize-space())=5]"
         ));
-        return (int) candidates.stream()
-                .filter(this::isDisplayedSafe)
-                .map(e -> {
-                    try {
-                        return e.getText().trim();
-                    } catch (Exception x) {
-                        return "";
+
+        int count = 0;
+        for (WebElement el : candidates) {
+            if (isDisplayedSafe(el)) {
+                try {
+                    String text = el.getText().trim();
+                    if (HHMM.matcher(text).matches()) {
+                        count++;
                     }
-                })
-                .filter(t -> HHMM.matcher(t).matches())
-                .count();
+                } catch (Exception e) {
+                    // Skip elements that can't be read
+                }
+            }
+        }
+        return count;
     }
 
     public boolean hasText(String keyword) {
-        return driver.findElements(By.xpath("//*[contains(text(),\"" + keyword + "\")]"))
-                .stream().anyMatch(this::isDisplayedSafe);
+        List<WebElement> elements = driver.findElements(By.xpath("//*[contains(text(),\"" + keyword + "\")]"));
+        for (WebElement el : elements) {
+            if (isDisplayedSafe(el)) {
+                return true;
+            }
+        }
+        return false;
     }
 
     public boolean hasPriceFormat() {
-        return driver.findElements(By.xpath("//*[contains(text(),'₽') or contains(text(),'руб')]"))
-                .stream().anyMatch(this::isDisplayedSafe);
+        List<WebElement> priceElements = driver.findElements(By.xpath("//*[contains(text(),'₽') or contains(text(),'руб')]"));
+        for (WebElement el : priceElements) {
+            if (isDisplayedSafe(el)) {
+                return true;
+            }
+        }
+        return false;
     }
 
     public String currentUrl() {

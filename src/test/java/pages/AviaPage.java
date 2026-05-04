@@ -23,6 +23,8 @@ public class AviaPage extends BaseFormPage {
     );
     private static final By DATE_INPUT = By.xpath("//input[@data-ti='trip-dates']");
 
+    private static final String SAME_CITIES_ERROR = "Места отправления и назначения не должны совпадать";
+
     public AviaPage(WebDriver driver, WebDriverWait wait) {
         super(driver, wait, null);
     }
@@ -66,57 +68,72 @@ public class AviaPage extends BaseFormPage {
 
     public boolean submitAndExpectNoNavigation() {
         Set<String> oldHandles = new HashSet<>(driver.getWindowHandles());
+
         try {
             WebElement btn = driver.findElement(SUBMIT);
             ((JavascriptExecutor) driver).executeScript("arguments[0].click();", btn);
-        } catch (Exception ignored) {
-        }
-        switchToNewWindowIfAny(oldHandles, Duration.ofSeconds(3));
-        try {
-            new WebDriverWait(driver, Duration.ofSeconds(3))
-                    .until(d -> d.getCurrentUrl().contains("/f/"));
-            return false;
         } catch (Exception e) {
-            return !driver.getCurrentUrl().contains("/f/");
+            // Button click failed
         }
+
+        switchToNewWindowIfAny(oldHandles, Duration.ofSeconds(3));
+
+        try {
+            WebDriverWait shortWait = new WebDriverWait(driver, Duration.ofSeconds(3));
+            shortWait.until(d -> d.getCurrentUrl().contains("/f/"));
+            return false; // Navigation occurred
+        } catch (Exception e) {
+            return !driver.getCurrentUrl().contains("/f/"); // No navigation
+        }
+    }
+
+    public boolean hasValidationHint() {
+        return driver.findElements(By.xpath(
+                "//*[contains(text(),'" + SAME_CITIES_ERROR + "')]"
+        )).stream().anyMatch(this::isDisplayedSafe);
     }
 
     private void clickSubmitWithFallbacks() {
         Set<String> oldHandles = new HashSet<>(driver.getWindowHandles());
         String oldUrl = safeUrl();
+
         WebElement btn = wait.until(ExpectedConditions.elementToBeClickable(SUBMIT));
         ((JavascriptExecutor) driver).executeScript(
                 "arguments[0].scrollIntoView({block:'center'});", btn);
-        try {
-            ((JavascriptExecutor) driver).executeScript(
-                    "document.querySelectorAll('iframe.tutu-chat-widget-iframe, " +
-                            "[class*=\"tutuSmart\"], [data-ti=\"disclaimer_wrapper\"], " +
-                            "[class*=\"chat-widget\"]').forEach(e => e.style.display = 'none');");
-        } catch (Exception ignored) {
-        }
+
+        // Hide overlay widgets that might intercept clicks
+        hideOverlayWidgets();
+
+        // Try native click first, fallback to JavaScript click
         try {
             btn.click();
         } catch (Exception e) {
             ((JavascriptExecutor) driver).executeScript("arguments[0].click();", btn);
         }
+
+        // Wait for navigation or new window
         if (!waitForUrlChangeOrNewWindow(oldHandles, oldUrl, Duration.ofSeconds(5))) {
+            // Retry click if navigation didn't occur
             ((JavascriptExecutor) driver).executeScript("arguments[0].click();", btn);
             waitForUrlChangeOrNewWindow(oldHandles, oldUrl, Duration.ofSeconds(8));
         }
+
         switchToNewWindowIfAny(oldHandles, Duration.ofSeconds(2));
     }
 
     private boolean waitForUrlChangeOrNewWindow(
             Set<String> oldHandles, String oldUrl, Duration timeout) {
         try {
-            new WebDriverWait(driver, timeout)
-                    .until(d -> {
-                        for (String h : d.getWindowHandles()) {
-                            if (!oldHandles.contains(h)) return true;
-                        }
-                        String cur = safeUrl();
-                        return cur != null && !cur.equals(oldUrl);
-                    });
+            WebDriverWait wait = new WebDriverWait(driver, timeout);
+            wait.until(d -> {
+                for (String h : d.getWindowHandles()) {
+                    if (!oldHandles.contains(h)) {
+                        return true;
+                    }
+                }
+                String cur = safeUrl();
+                return cur != null && !cur.equals(oldUrl);
+            });
             return true;
         } catch (Exception e) {
             return false;
@@ -125,26 +142,24 @@ public class AviaPage extends BaseFormPage {
 
     private void switchToNewWindowIfAny(Set<String> oldHandles, Duration timeout) {
         try {
-            new WebDriverWait(driver, timeout)
-                    .until(d -> {
-                        for (String h : d.getWindowHandles()) {
-                            if (!oldHandles.contains(h)) return true;
-                        }
-                        return false;
-                    });
+            WebDriverWait wait = new WebDriverWait(driver, timeout);
+            wait.until(d -> {
+                for (String h : d.getWindowHandles()) {
+                    if (!oldHandles.contains(h)) {
+                        return true;
+                    }
+                }
+                return false;
+            });
+
             for (String h : driver.getWindowHandles()) {
                 if (!oldHandles.contains(h)) {
                     driver.switchTo().window(h);
                     break;
                 }
             }
-        } catch (Exception ignored) {
+        } catch (Exception e) {
+            // No new window opened or timeout
         }
-    }
-
-    public boolean hasValidationHint() {
-        return driver.findElements(By.xpath(
-                "//*[contains(text(),'Места отправления и назначения не должны совпадать')]"
-        )).stream().anyMatch(this::isDisplayedSafe);
     }
 }

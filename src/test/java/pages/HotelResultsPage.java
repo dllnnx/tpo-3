@@ -11,32 +11,51 @@ import java.util.List;
 
 public class HotelResultsPage extends Page {
 
+    private static final Duration RESULTS_TIMEOUT = Duration.ofSeconds(60);
+
     public HotelResultsPage(WebDriver driver, WebDriverWait wait) {
         super(driver, wait, null);
     }
 
     public HotelResultsPage waitForResults() {
-        WebDriverWait longWait = new WebDriverWait(driver, Duration.ofSeconds(60), Duration.ofMillis(500));
+        WebDriverWait longWait = new WebDriverWait(driver, RESULTS_TIMEOUT, Duration.ofMillis(500));
         longWait.until(ExpectedConditions.urlContains("hotel.tutu.ru"));
         longWait.until(d -> countHotelCards() >= 1 || hasText("отел") || hasText("Отел"));
         return this;
     }
 
     public int countHotelCards() {
-        List<WebElement> ratings = driver.findElements(By.xpath(
+        List<WebElement> elements = driver.findElements(By.xpath(
                 "//*[contains(text(),'отзыв') or contains(text(),'Отел') or contains(text(),'хостел')]"
         ));
-        return (int) ratings.stream().filter(this::isDisplayedSafe).count();
+
+        int count = 0;
+        for (WebElement el : elements) {
+            if (isDisplayedSafe(el)) {
+                count++;
+            }
+        }
+        return count;
     }
 
     public boolean hasText(String keyword) {
-        return driver.findElements(By.xpath("//*[contains(text(),\"" + keyword + "\")]"))
-                .stream().anyMatch(this::isDisplayedSafe);
+        List<WebElement> elements = driver.findElements(By.xpath("//*[contains(text(),\"" + keyword + "\")]"));
+        for (WebElement el : elements) {
+            if (isDisplayedSafe(el)) {
+                return true;
+            }
+        }
+        return false;
     }
 
     public boolean hasPriceFormat() {
-        return driver.findElements(By.xpath("//*[contains(text(),'₽')]"))
-                .stream().anyMatch(this::isDisplayedSafe);
+        List<WebElement> priceElements = driver.findElements(By.xpath("//*[contains(text(),'₽')]"));
+        for (WebElement el : priceElements) {
+            if (isDisplayedSafe(el)) {
+                return true;
+            }
+        }
+        return false;
     }
 
     public String currentUrl() {

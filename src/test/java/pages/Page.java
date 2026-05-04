@@ -6,6 +6,11 @@ import org.openqa.selenium.support.ui.WebDriverWait;
 
 public abstract class Page {
 
+    private static final String HIDE_OVERLAYS_SCRIPT =
+            "document.querySelectorAll('iframe.tutu-chat-widget-iframe, " +
+            "[class*=\"tutuSmart\"], [data-ti=\"disclaimer_wrapper\"], " +
+            "[class*=\"chat-widget\"]').forEach(e => e.style.display = 'none');";
+
     protected final WebDriver driver;
     protected final WebDriverWait wait;
     private final String url;
@@ -17,22 +22,24 @@ public abstract class Page {
     }
 
     public Page open() {
-        if (url != null && (driver.getCurrentUrl() == null || !driver.getCurrentUrl().equals(url))) {
-            driver.get(url);
+        if (url != null) {
+            String currentUrl = safeUrl();
+            if (currentUrl == null || !currentUrl.equals(url)) {
+                driver.get(url);
+            }
         }
         hideOverlayWidgets();
         return this;
     }
 
     protected void hideOverlayWidgets() {
-        ((JavascriptExecutor) driver).executeScript(
-                "document.querySelectorAll('iframe.tutu-chat-widget-iframe, " +
-                        "[class*=\"tutuSmart\"], [data-ti=\"disclaimer_wrapper\"], " +
-                        "[class*=\"chat-widget\"]').forEach(e => e.style.display = 'none');"
-        );
+        ((JavascriptExecutor) driver).executeScript(HIDE_OVERLAYS_SCRIPT);
     }
 
     protected boolean isDisplayedSafe(org.openqa.selenium.WebElement el) {
+        if (el == null) {
+            return false;
+        }
         try {
             return el.isDisplayed();
         } catch (Exception e) {

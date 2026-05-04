@@ -3,6 +3,7 @@ package pages;
 import org.openqa.selenium.By;
 import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.WebElement;
+import org.openqa.selenium.support.ui.ExpectedConditions;
 import org.openqa.selenium.support.ui.WebDriverWait;
 
 import java.time.Duration;
@@ -18,13 +19,13 @@ public class ElectrichkaResultsPage extends Page {
     }
 
     public ElectrichkaResultsPage waitForSchedule() {
-        WebDriverWait longWait = new WebDriverWait(driver, Duration.ofSeconds(45), Duration.ofMillis(500));
-        longWait.until(d -> !d.getCurrentUrl().contains("/prigorod/"));
-        longWait.until(d -> countDepartureTimes() >= 1
-                || hasText("Расписание")
-                || hasText("электричк")
-                || hasText("Москва")
-                || hasText("отправ"));
+
+        WebDriverWait wait = new WebDriverWait(driver, Duration.ofSeconds(20));
+
+        wait.until(ExpectedConditions.visibilityOfElementLocated(
+                By.xpath("//a[string-length(normalize-space())=5 and contains(text(), ':')]")
+        ));
+
         return this;
     }
 
@@ -32,25 +33,30 @@ public class ElectrichkaResultsPage extends Page {
         List<WebElement> candidates = driver.findElements(By.xpath(
                 "//a[contains(text(), ':') and string-length(normalize-space())=5]"
         ));
-        return (int) candidates.stream()
-                .filter(this::isDisplayedSafe)
-                .map(e -> {
-                    try {
-                        return e.getText().trim();
-                    } catch (Exception x) {
-                        return "";
+
+        int count = 0;
+        for (WebElement el : candidates) {
+            if (isDisplayedSafe(el)) {
+                try {
+                    String text = el.getText().trim();
+                    if (HHMM.matcher(text).matches()) {
+                        count++;
                     }
-                })
-                .filter(t -> HHMM.matcher(t).matches())
-                .count();
+                } catch (Exception e) {
+                    // Skip elements that can't be read
+                }
+            }
+        }
+        return count;
     }
 
     public boolean hasText(String keyword) {
-        return driver.findElements(By.xpath("//*[contains(., \"" + keyword + "\")]"))
-                .stream().anyMatch(this::isDisplayedSafe);
-    }
-
-    public String currentUrl() {
-        return driver.getCurrentUrl();
+        List<WebElement> elements = driver.findElements(By.xpath("//*[contains(., \"" + keyword + "\")]"));
+        for (WebElement el : elements) {
+            if (isDisplayedSafe(el)) {
+                return true;
+            }
+        }
+        return false;
     }
 }

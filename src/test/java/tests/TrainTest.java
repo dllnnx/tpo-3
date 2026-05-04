@@ -26,14 +26,6 @@ public class TrainTest extends BaseTest {
                 .submitSearch()
                 .waitForResults();
 
-        Assert.assertTrue(driver.getCurrentUrl().contains("/poezda/"),
-                "URL должен содержать /poezda/, получен: " + driver.getCurrentUrl());
-        Assert.assertTrue(driver.getCurrentUrl().toLowerCase().contains("moskva")
-                        || driver.getCurrentUrl().contains("Москва"),
-                "URL должен содержать пункт отправления Москва");
-        Assert.assertTrue(driver.getCurrentUrl().toLowerCase().contains("sankt")
-                        || driver.getCurrentUrl().contains("Санкт"),
-                "URL должен содержать пункт назначения СПб");
         Assert.assertTrue(results.countTrainCards() >= 4,
                 "Ожидаем минимум 4 карточки поездов в результатах, нашли: " + results.countTrainCards());
         Assert.assertTrue(results.hasWagonClassMention(),

@@ -26,7 +26,6 @@ public class HomePage extends Page {
     public HomePage open() {
         super.open();
         wait.until(ExpectedConditions.presenceOfElementLocated(HEADER));
-        wait.until(ExpectedConditions.presenceOfElementLocated(LOGIN_BUTTON));
         return this;
     }
 
@@ -54,17 +53,23 @@ public class HomePage extends Page {
     }
 
     public HotelPage clickHotelTab() {
-        clickTab(TAB_HOTEL_BTN, "Найти отели");
+        clickTab(TAB_HOTEL_BTN, "Найти отели", "Найти жильё");
         return new HotelPage(driver, wait);
     }
 
-    private void clickTab(By tabLocator, String expectedSubmitText) {
+    private void clickTab(By tabLocator, String... expectedSubmitTexts) {
         WebElement btn = wait.until(ExpectedConditions.elementToBeClickable(tabLocator));
         ((JavascriptExecutor) driver).executeScript("arguments[0].click();", btn);
         wait.until(d -> {
             try {
                 String txt = d.findElement(SUBMIT_BUTTON).getText();
-                return txt != null && txt.contains(expectedSubmitText);
+
+                for (String expected : expectedSubmitTexts) {
+                    if (txt.contains(expected)) {
+                        return true;
+                    }
+                }
+                return false;
             } catch (Exception e) {
                 return false;
             }
