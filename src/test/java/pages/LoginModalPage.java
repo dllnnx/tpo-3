@@ -50,10 +50,13 @@ public class LoginModalPage extends Page {
 
     public LoginModalPage fillEmail(String email) {
         WebElement input = wait.until(d -> getVisibleEmailInput());
-        ((org.openqa.selenium.JavascriptExecutor) driver).executeScript(
+        ((JavascriptExecutor) driver).executeScript(
                 "arguments[0].scrollIntoView({block:'center'});", input);
         input.click();
-        try { input.clear(); } catch (Exception ignored) {}
+        try {
+            input.clear();
+        } catch (Exception ignored) {
+        }
         input.sendKeys(email);
         return this;
     }

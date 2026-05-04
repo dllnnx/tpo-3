@@ -42,12 +42,4 @@ public class HotelResultsPage extends Page {
     public String currentUrl() {
         return driver.getCurrentUrl();
     }
-
-    private boolean isDisplayedSafe(WebElement el) {
-        try {
-            return el.isDisplayed();
-        } catch (Exception e) {
-            return false;
-        }
-    }
 }

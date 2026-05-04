@@ -39,7 +39,11 @@ public class AviaResultsPage extends Page {
         return (int) candidates.stream()
                 .filter(this::isDisplayedSafe)
                 .map(e -> {
-                    try { return e.getText().trim(); } catch (Exception x) { return ""; }
+                    try {
+                        return e.getText().trim();
+                    } catch (Exception x) {
+                        return "";
+                    }
                 })
                 .filter(t -> HHMM.matcher(t).matches())
                 .count();
@@ -86,13 +90,5 @@ public class AviaResultsPage extends Page {
 
     public boolean baggageMentioned() {
         return hasText("Багаж") || hasText("багаж") || hasText("с багажом");
-    }
-
-    private boolean isDisplayedSafe(WebElement el) {
-        try {
-            return el.isDisplayed();
-        } catch (Exception e) {
-            return false;
-        }
     }
 }

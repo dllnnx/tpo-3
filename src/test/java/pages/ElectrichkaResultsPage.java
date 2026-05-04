@@ -3,7 +3,6 @@ package pages;
 import org.openqa.selenium.By;
 import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.WebElement;
-
 import org.openqa.selenium.support.ui.WebDriverWait;
 
 import java.time.Duration;
@@ -36,7 +35,11 @@ public class ElectrichkaResultsPage extends Page {
         return (int) candidates.stream()
                 .filter(this::isDisplayedSafe)
                 .map(e -> {
-                    try { return e.getText().trim(); } catch (Exception x) { return ""; }
+                    try {
+                        return e.getText().trim();
+                    } catch (Exception x) {
+                        return "";
+                    }
                 })
                 .filter(t -> HHMM.matcher(t).matches())
                 .count();
@@ -49,13 +52,5 @@ public class ElectrichkaResultsPage extends Page {
 
     public String currentUrl() {
         return driver.getCurrentUrl();
-    }
-
-    private boolean isDisplayedSafe(WebElement el) {
-        try {
-            return el.isDisplayed();
-        } catch (Exception e) {
-            return false;
-        }
     }
 }

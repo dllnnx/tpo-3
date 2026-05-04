@@ -25,14 +25,26 @@ public abstract class Page {
     }
 
     protected void hideOverlayWidgets() {
+        ((JavascriptExecutor) driver).executeScript(
+                "document.querySelectorAll('iframe.tutu-chat-widget-iframe, " +
+                        "[class*=\"tutuSmart\"], [data-ti=\"disclaimer_wrapper\"], " +
+                        "[class*=\"chat-widget\"]').forEach(e => e.style.display = 'none');"
+        );
+    }
+
+    protected boolean isDisplayedSafe(org.openqa.selenium.WebElement el) {
         try {
-            ((JavascriptExecutor) driver).executeScript(
-                    "document.querySelectorAll('iframe.tutu-chat-widget-iframe, " +
-                            "[class*=\"tutuSmart\"], [data-ti=\"disclaimer_wrapper\"], " +
-                            "[class*=\"chat-widget\"]').forEach(e => e.style.display = 'none');"
-            );
-        } catch (Exception ignored) {
+            return el.isDisplayed();
+        } catch (Exception e) {
+            return false;
         }
     }
 
+    protected String safeUrl() {
+        try {
+            return driver.getCurrentUrl();
+        } catch (Exception e) {
+            return null;
+        }
+    }
 }

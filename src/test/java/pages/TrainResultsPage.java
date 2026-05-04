@@ -55,7 +55,11 @@ public class TrainResultsPage extends Page {
         return driver.findElements(TRAIN_NAME_BADGE).stream()
                 .filter(this::isDisplayedSafe)
                 .map(e -> {
-                    try { return e.getText().trim(); } catch (Exception x) { return ""; }
+                    try {
+                        return e.getText().trim();
+                    } catch (Exception x) {
+                        return "";
+                    }
                 })
                 .filter(s -> !s.isEmpty())
                 .toList();
@@ -105,7 +109,8 @@ public class TrainResultsPage extends Page {
                         for (WebElement c : chips) {
                             try {
                                 if (c.isDisplayed()) return c;
-                            } catch (Exception ignored) {}
+                            } catch (Exception ignored) {
+                            }
                         }
                         return null;
                     });
@@ -116,13 +121,5 @@ public class TrainResultsPage extends Page {
         } catch (Exception ignored) {
         }
         return this;
-    }
-
-    private boolean isDisplayedSafe(WebElement el) {
-        try {
-            return el.isDisplayed();
-        } catch (Exception e) {
-            return false;
-        }
     }
 }

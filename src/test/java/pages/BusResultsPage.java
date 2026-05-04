@@ -31,7 +31,11 @@ public class BusResultsPage extends Page {
         return (int) candidates.stream()
                 .filter(this::isDisplayedSafe)
                 .map(e -> {
-                    try { return e.getText().trim(); } catch (Exception x) { return ""; }
+                    try {
+                        return e.getText().trim();
+                    } catch (Exception x) {
+                        return "";
+                    }
                 })
                 .filter(t -> HHMM.matcher(t).matches())
                 .count();
@@ -49,13 +53,5 @@ public class BusResultsPage extends Page {
 
     public String currentUrl() {
         return driver.getCurrentUrl();
-    }
-
-    private boolean isDisplayedSafe(WebElement el) {
-        try {
-            return el.isDisplayed();
-        } catch (Exception e) {
-            return false;
-        }
     }
 }

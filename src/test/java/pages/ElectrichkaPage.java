@@ -9,16 +9,11 @@ import org.openqa.selenium.support.ui.WebDriverWait;
 import utils.Constants;
 
 import java.time.Duration;
-import java.util.List;
 
 public class ElectrichkaPage extends Page {
 
-    private static final By FROM_INPUT = By.xpath(
-            "//label[.//span[text()='Откуда']]//input"
-    );
-    private static final By TO_INPUT = By.xpath(
-            "//label[.//span[text()='Куда']]//input"
-    );
+    private static final By FROM_INPUT = By.xpath("//label[.//span[text()='Откуда']]//input");
+    private static final By TO_INPUT = By.xpath("//label[.//span[text()='Куда']]//input");
     private static final By SUBMIT = By.xpath("//button[@data-ti='submit-button']");
 
     public ElectrichkaPage(WebDriver driver, WebDriverWait wait) {
@@ -77,7 +72,6 @@ public class ElectrichkaPage extends Page {
         try {
             WebElement first = new WebDriverWait(driver, Duration.ofSeconds(5))
                     .until(ExpectedConditions.elementToBeClickable(suggest));
-//            ((JavascriptExecutor) driver).executeScript("arguments[0].click();", first);
             driver.findElements(suggest).get(0).click();
         } catch (Exception ignored) {
         }
@@ -96,7 +90,7 @@ public class ElectrichkaPage extends Page {
         return new ElectrichkaResultsPage(driver, wait);
     }
 
-    public List<WebElement> findFromInput() {
+    public java.util.List<WebElement> findFromInput() {
         return driver.findElements(FROM_INPUT);
     }
 }
