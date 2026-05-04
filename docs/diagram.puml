@@ -1,14 +1,26 @@
-@startuml tutu_use_cases
+@startuml
 left to right direction
 skinparam packageStyle rectangle
 skinparam shadowing false
 skinparam usecase {
   BackgroundColor #FEFEFE
   BorderColor #444444
+  BorderThickness 2
 }
 skinparam package {
   BackgroundColor #F5F8FA
   BorderColor #5B7C99
+  BorderThickness 2
+}
+skinparam actor {
+  BackgroundColor #FFFFFF
+  BorderColor #333333
+  BorderThickness 2
+}
+skinparam note {
+  BackgroundColor #FFF9E6
+  BorderColor #FFA500
+  BorderThickness 2
 }
 
 title Use-case диаграмма функционального тестирования tutu.ru
@@ -17,36 +29,36 @@ actor "Гость" as Guest
 
 rectangle "tutu.ru" {
 
-  package "Главная страница" {
-    usecase "UC-10\nОткрыть модалку\nавторизации\nи ввести email" as UC10
+  package "Главная страница\nwww.tutu.ru" {
+    usecase "Открыть модалку\nавторизации\nи ввести email" as UC10
   }
 
   package "Ж/д билеты\n/poezda/" {
-    usecase "UC-01\nПоиск ж/д\nМосква → СПб\nс выбором даты" as UC01
-    usecase "UC-02\nФильтр «Сапсан»\nна результатах ж/д" as UC02
-    usecase "UC-03\nПереключение даты\nв date-strip\nрезультатов ж/д" as UC03
+    usecase "Поиск ж/д\nМосква → СПб\nс выбором даты" as UC01
+    usecase "Фильтр «Сапсан»\nна результатах ж/д" as UC02
+    usecase "Переключение даты\nв date-strip\nрезультатов ж/д" as UC03
   }
 
   package "Авиабилеты\navia.tutu.ru" {
-    usecase "UC-04\nПоиск авиабилетов\nМосква → СПб" as UC04
-    usecase "UC-05\nФильтр «С багажом»\nна результатах авиа" as UC05
-    usecase "UC-12\nНегативный:\nодинаковые города\nв авиа форме" as UC12
+    usecase "Поиск авиабилетов\nМосква → СПб" as UC04
+    usecase "Фильтр «С багажом»\nна результатах авиа" as UC05
+    usecase "Негативный:\nодинаковые города\nв авиа форме" as UC12
   }
 
   package "Автобусы\nbus.tutu.ru" {
-    usecase "UC-06\nПоиск автобусов\nМосква → Тула\nна завтра" as UC06
+    usecase "Поиск автобусов\nМосква → Тула\nна завтра" as UC06
   }
 
   package "Отели\nhotel.tutu.ru" {
-    usecase "UC-07\nПоиск отелей\nв Сочи на 2 ночи" as UC07
+    usecase "Поиск отелей\nв Сочи на 2 ночи" as UC07
   }
 
   package "Электрички\n/prigorod/" {
-    usecase "UC-08\nРасписание\nэлектричек\nМосква → Мытищи" as UC08
+    usecase "Расписание\nэлектричек\nМосква → Мытищи" as UC08
   }
 
   package "Справочная\n/2read/" {
-    usecase "UC-11\nПоиск\nв справочной" as UC11
+    usecase "Поиск\nв справочной" as UC11
   }
 }
 
@@ -67,16 +79,31 @@ UC03 ..> UC01 : <<extend>>\nпосле UC-01
 UC05 ..> UC04 : <<extend>>\nпосле UC-04
 
 note right of UC12
-  Негативный сценарий:
-  система должна
-  не пустить пользователя
-  на страницу результатов
+  <b>Негативный сценарий</b>
+  Система должна:
+  - Не пустить на /f/...
+  - Показать валидацию
+  - URL остаётся avia.tutu.ru
 end note
 
 note bottom of UC10
-  Открытие модалки
-  + ввод email
-  + клик «Получить код»
+  <b>Авторизация</b>
+  - Открыть модалку
+  - Ввести email
+  - Клик «Получить код»
 end note
 
+note left of UC01
+  <b>Базовый поиск</b>
+  - Откуда/Куда
+  - Выбор даты
+  - >= 4 карточки
+end note
+
+note right of UC08
+  <b>Расписание</b>
+  - Форма предзаполнена
+  - >= 1 время HH:MM
+  - /prigorod/ в URL
+end note
 @enduml
