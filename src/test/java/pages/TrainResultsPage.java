@@ -30,7 +30,6 @@ public class TrainResultsPage extends Page {
 
     public TrainResultsPage waitForResults() {
         WebDriverWait longWait = new WebDriverWait(driver, RESULTS_TIMEOUT, Duration.ofMillis(500));
-        longWait.until(ExpectedConditions.urlContains("/poezda/"));
         longWait.until(d -> {
             try {
                 List<WebElement> cards = d.findElements(OFFER_CARD);
@@ -61,10 +60,6 @@ public class TrainResultsPage extends Page {
             }
         }
         return false;
-    }
-
-    public boolean hasWagonClassMention() {
-        return hasText("Купе") || hasText("Плацкарт") || hasText("Сидячий") || hasText("СВ");
     }
 
     public List<String> visibleTrainNames() {

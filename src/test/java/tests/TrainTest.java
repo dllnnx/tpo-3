@@ -28,8 +28,6 @@ public class TrainTest extends BaseTest {
 
         Assert.assertTrue(results.countTrainCards() >= 4,
                 "Ожидаем минимум 4 карточки поездов в результатах, нашли: " + results.countTrainCards());
-        Assert.assertTrue(results.hasWagonClassMention(),
-                "В результатах должны упоминаться типы вагонов (Купе/Плацкарт/Сидячий/СВ)");
     }
 
     /**

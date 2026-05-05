@@ -68,7 +68,18 @@ public class HomePage extends Page {
     }
 
     public LoginModalPage openLoginModal() {
-        wait.until(ExpectedConditions.visibilityOfElementLocated(LOGIN_BUTTON)).click();
+        wait.until(d -> !d.findElements(LOGIN_BUTTON).isEmpty());
+        WebElement visibleBtn = wait.until(d -> {
+            for (WebElement b : d.findElements(LOGIN_BUTTON)) {
+                try {
+                    if (b.isDisplayed() && b.isEnabled()) return b;
+                } catch (Exception ignored) {
+                }
+            }
+            return null;
+        });
+        ((JavascriptExecutor) driver).executeScript(
+                "arguments[0].scrollIntoView({block:'center'}); arguments[0].click();", visibleBtn);
         hideOverlayWidgets();
         return new LoginModalPage(driver, wait);
     }
