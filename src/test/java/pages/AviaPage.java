@@ -41,12 +41,9 @@ public class AviaPage extends BaseFormPage {
 
     public AviaPage pickDateInDays(int daysFromToday) {
         LocalDate target = DateUtils.plusDays(daysFromToday);
-        WebElement dateInput = wait.until(ExpectedConditions.elementToBeClickable(DATE_INPUT));
-        ((JavascriptExecutor) driver).executeScript("arguments[0].click();", dateInput);
-
+        wait.until(ExpectedConditions.elementToBeClickable(DATE_INPUT)).click();
         wait.until(ExpectedConditions.visibilityOfElementLocated(
                 By.xpath("//*[@data-ti='suggest-container']")));
-
         navigateCalendarToMonth(target);
         clickDayInVisibleMonth(target);
         clickCalendarApply();
@@ -73,7 +70,6 @@ public class AviaPage extends BaseFormPage {
             WebElement btn = driver.findElement(SUBMIT);
             ((JavascriptExecutor) driver).executeScript("arguments[0].click();", btn);
         } catch (Exception e) {
-            // Button click failed
         }
 
         switchToNewWindowIfAny(oldHandles, Duration.ofSeconds(3));

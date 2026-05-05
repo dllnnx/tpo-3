@@ -1,17 +1,18 @@
 package pages;
 
+import org.jspecify.annotations.NonNull;
 import org.openqa.selenium.By;
-import org.openqa.selenium.JavascriptExecutor;
+import org.openqa.selenium.NotFoundException;
 import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.WebElement;
 import org.openqa.selenium.support.ui.ExpectedConditions;
 import org.openqa.selenium.support.ui.WebDriverWait;
 import utils.DateUtils;
 
-import java.time.Duration;
 import java.time.LocalDate;
 import java.time.ZoneId;
 import java.util.List;
+import java.util.Optional;
 
 public abstract class BaseFormPage extends Page {
 
@@ -35,16 +36,12 @@ public abstract class BaseFormPage extends Page {
     protected WebElement fillField(By input, String city) {
         WebElement inp = wait.until(ExpectedConditions.elementToBeClickable(input));
 
-        ((JavascriptExecutor) driver).executeScript("arguments[0].scrollIntoView({block:'center'});", inp);
-
         inp.click();
         inp.clear();
         inp.sendKeys(city);
 
-        // Wait until suggestions appear
         wait.until(ExpectedConditions.visibilityOfElementLocated(SUGGEST_CONTAINER));
 
-        // Wait until at least one suggestion matches text
         WebElement matchedSuggestion = wait.until(driver -> {
             List<WebElement> items = driver.findElements(SUGGEST_ITEM);
             for (WebElement el : items) {
@@ -60,16 +57,7 @@ public abstract class BaseFormPage extends Page {
             return null;
         });
 
-        wait.until(ExpectedConditions.elementToBeClickable(matchedSuggestion));
         matchedSuggestion.click();
-
-        // Wait until input value stabilizes and contains expected city
-        wait.until(d -> {
-            String value = d.findElement(input).getDomAttribute("value");
-            return value != null &&
-                    value.toLowerCase().contains(city.toLowerCase());
-        });
-
         return inp;
     }
 
@@ -85,27 +73,13 @@ public abstract class BaseFormPage extends Page {
                 return;
             }
 
-            WebElement nextButton = driver.findElement(CALENDAR_NEXT_BUTTON);
-            ((JavascriptExecutor) driver).executeScript("arguments[0].click();", nextButton);
-
-            try {
-                WebDriverWait shortWait = new WebDriverWait(driver, Duration.ofSeconds(2));
-                shortWait.until(d -> {
-                    String newMonth = d.findElement(CALENDAR_MONTH_TITLE).getText();
-                    return !newMonth.equals(currentMonth);
-                });
-            } catch (Exception e) {
-                // if calendar doesn't update, try next iteration
-            }
+            driver.findElement(CALENDAR_NEXT_BUTTON).click();
+            wait.until(ExpectedConditions.visibilityOfElementLocated(CALENDAR_MONTH_TITLE));
         }
     }
 
     protected String readCalendarMonthTitle() {
-        try {
-            return driver.findElement(CALENDAR_MONTH_TITLE).getText();
-        } catch (Exception e) {
-            return "";
-        }
+        return driver.findElement(CALENDAR_MONTH_TITLE).getText();
     }
 
     protected void clickDayInVisibleMonth(LocalDate target) {
@@ -118,30 +92,11 @@ public abstract class BaseFormPage extends Page {
     }
 
     protected void clickCalendarApply() {
-        try {
-            WebDriverWait shortWait = new WebDriverWait(driver, Duration.ofSeconds(3));
-            WebElement btn = shortWait.until(ExpectedConditions.elementToBeClickable(CALENDAR_APPLY_BUTTON));
-            ((JavascriptExecutor) driver).executeScript("arguments[0].click();", btn);
-
-            try {
-                shortWait.until(ExpectedConditions.invisibilityOfElementLocated(CALENDAR));
-            } catch (Exception e) {
-                // Continue even if calendar doesn't close immediately
-            }
-        } catch (Exception e) {
-            // If apply button not found, day selection may be auto-applied
-        }
+        wait.until(ExpectedConditions.elementToBeClickable(CALENDAR_APPLY_BUTTON)).click();
+        wait.until(ExpectedConditions.invisibilityOfElementLocated(CALENDAR));
     }
 
     protected void clickSubmit() {
-        WebElement btn = wait.until(ExpectedConditions.elementToBeClickable(SUBMIT));
-        ((JavascriptExecutor) driver).executeScript(
-                "arguments[0].scrollIntoView({block:'center'});", btn);
-
-        try {
-            btn.click();
-        } catch (Exception e) {
-            ((JavascriptExecutor) driver).executeScript("arguments[0].click();", btn);
-        }
+        wait.until(ExpectedConditions.elementToBeClickable(SUBMIT)).click();
     }
 }

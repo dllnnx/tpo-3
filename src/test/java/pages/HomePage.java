@@ -1,12 +1,13 @@
 package pages;
 
-import org.openqa.selenium.By;
-import org.openqa.selenium.JavascriptExecutor;
-import org.openqa.selenium.WebDriver;
-import org.openqa.selenium.WebElement;
+import org.openqa.selenium.*;
 import org.openqa.selenium.support.ui.ExpectedConditions;
 import org.openqa.selenium.support.ui.WebDriverWait;
 import utils.Constants;
+
+import java.util.Arrays;
+import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
 public class HomePage extends Page {
 
@@ -58,38 +59,16 @@ public class HomePage extends Page {
     }
 
     private void clickTab(By tabLocator, String... expectedSubmitTexts) {
-        WebElement btn = wait.until(ExpectedConditions.elementToBeClickable(tabLocator));
-        ((JavascriptExecutor) driver).executeScript("arguments[0].click();", btn);
-        wait.until(d -> {
-            try {
-                String txt = d.findElement(SUBMIT_BUTTON).getText();
-
-                for (String expected : expectedSubmitTexts) {
-                    if (txt.contains(expected)) {
-                        return true;
-                    }
-                }
-                return false;
-            } catch (Exception e) {
-                return false;
-            }
-        });
+        wait.until(ExpectedConditions.elementToBeClickable(tabLocator)).click();
+        String expectedTextsPattern = Arrays.stream(expectedSubmitTexts)
+                .map(Pattern::quote)
+                .collect(Collectors.joining("|"));
+        wait.until(ExpectedConditions.textMatches(SUBMIT_BUTTON, Pattern.compile(expectedTextsPattern)));
         hideOverlayWidgets();
     }
 
     public LoginModalPage openLoginModal() {
-        wait.until(d -> !d.findElements(LOGIN_BUTTON).isEmpty());
-        WebElement visibleBtn = wait.until(d -> {
-            for (WebElement b : d.findElements(LOGIN_BUTTON)) {
-                try {
-                    if (b.isDisplayed() && b.isEnabled()) return b;
-                } catch (Exception ignored) {
-                }
-            }
-            return null;
-        });
-        ((JavascriptExecutor) driver).executeScript(
-                "arguments[0].scrollIntoView({block:'center'}); arguments[0].click();", visibleBtn);
+        wait.until(ExpectedConditions.visibilityOfElementLocated(LOGIN_BUTTON)).click();
         hideOverlayWidgets();
         return new LoginModalPage(driver, wait);
     }

@@ -32,28 +32,16 @@ public class AviaTest extends BaseTest {
                 By.xpath("//input[@data-ti='switch']")
         )).click();
 
-        Assert.assertEquals(avia.getFromValue(), "Москва",
-                "Поле «Откуда» должно содержать «Москва» после выбора");
-        Assert.assertTrue(avia.getToValue().startsWith("Санкт"),
-                "Поле «Куда» должно содержать «Санкт-Петербург» после выбора. Получено: "
-                        + avia.getToValue());
+        Assert.assertEquals(avia.getFromValue(), "Москва");
+        Assert.assertEquals(avia.getToValue(), "Санкт-Петербург");
 
         AviaResultsPage results = avia.submit();
-        boolean navigated = false;
-        try {
-            results.waitForResults();
-            navigated = true;
-        } catch (Exception ignored) {
-        }
+        results.waitForResults();
 
-        Assert.assertTrue(navigated || driver.getCurrentUrl().contains("avia.tutu.ru"),
+        Assert.assertTrue(driver.getCurrentUrl().contains("avia.tutu.ru"),
                 "После submit ожидаем переход на страницу результатов /f/ либо остаёмся на avia.tutu.ru. " +
                         "URL: " + driver.getCurrentUrl());
-
-        if (navigated) {
-            Assert.assertTrue(results.hasText("Москва") || results.hasText("Санкт"),
-                    "На странице результатов должны быть города маршрута");
-        }
+        Assert.assertTrue(results.hasAirlineName());
     }
 
     /**
