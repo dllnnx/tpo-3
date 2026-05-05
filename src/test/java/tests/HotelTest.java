@@ -18,11 +18,10 @@ public class HotelTest extends BaseTest {
 
         HotelResultsPage results = hotel.submit().waitForResults();
 
-        Assert.assertTrue(results.currentUrl().contains("hotel.tutu.ru"),
-                "URL должен остаться на hotel.tutu.ru: " + results.currentUrl());
+        Assert.assertTrue(results.currentUrl().contains("hotel.tutu.ru"), "Неверный URL " + results.currentUrl());
         Assert.assertTrue(results.hasText("Сочи") || results.currentUrl().toLowerCase().contains("sochi"),
-                "На странице результатов должно быть упоминание «Сочи»");
+                "На странице результатов должно быть упоминание \"Сочи\"");
         Assert.assertTrue(results.countHotelCards() >= 1 || results.hasPriceFormat(),
-                "Ожидаем хотя бы одну карточку отеля с ценой в результатах");
+                "Должна быть хотя бы одна карточка отеля с ценой в результатах");
     }
 }

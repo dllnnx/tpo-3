@@ -53,16 +53,6 @@ public class TrainResultsPage extends Page {
         return count;
     }
 
-    public boolean hasText(String keyword) {
-        List<WebElement> elements = driver.findElements(By.xpath("//*[contains(text(),\"" + keyword + "\")]"));
-        for (WebElement el : elements) {
-            if (isDisplayedSafe(el)) {
-                return true;
-            }
-        }
-        return false;
-    }
-
     public List<String> visibleTrainNames() {
         List<WebElement> badges = driver.findElements(TRAIN_NAME_BADGE);
         List<String> names = new ArrayList<>();

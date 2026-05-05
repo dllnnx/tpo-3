@@ -59,7 +59,8 @@ public class HomePage extends Page {
     }
 
     private void clickTab(By tabLocator, String... expectedSubmitTexts) {
-        wait.until(ExpectedConditions.elementToBeClickable(tabLocator)).click();
+        WebElement btn = wait.until(ExpectedConditions.elementToBeClickable(tabLocator));
+        ((JavascriptExecutor) driver).executeScript("arguments[0].click();", btn);
         String expectedTextsPattern = Arrays.stream(expectedSubmitTexts)
                 .map(Pattern::quote)
                 .collect(Collectors.joining("|"));

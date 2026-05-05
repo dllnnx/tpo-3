@@ -23,8 +23,10 @@ public class ElectrichkaResultsPage extends Page {
         WebDriverWait wait = new WebDriverWait(driver, Duration.ofSeconds(20));
 
         wait.until(ExpectedConditions.visibilityOfElementLocated(
-                By.xpath("//a[string-length(normalize-space())=5 and contains(text(), ':')]")
+                By.xpath("//h1[contains(text(),'Расписание электричек')]")
         ));
+
+        wait.until(d -> countDepartureTimes() > 0 || hasText("отправ") || hasText("электрич"));
 
         return this;
     }

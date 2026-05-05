@@ -34,19 +34,18 @@ rectangle "tutu.ru" {
   }
 
   package "Ж/д билеты\n/poezda/" {
-    usecase "Поиск ж/д\nМосква → СПб\nс выбором даты" as UC01
-    usecase "Фильтр «Сапсан»\nна результатах ж/д" as UC02
+    usecase "Поиск ж/д\nМосква -> СПб\nс выбором даты" as UC01
+    usecase "Фильтр "Сапсан"\nна результатах ж/д" as UC02
     usecase "Переключение даты\nв date-strip\nрезультатов ж/д" as UC03
   }
 
   package "Авиабилеты\navia.tutu.ru" {
-    usecase "Поиск авиабилетов\nМосква → СПб" as UC04
-    usecase "Фильтр «С багажом»\nна результатах авиа" as UC05
+    usecase "Поиск авиабилетов\nМосква -> СПб" as UC04
     usecase "Негативный:\nодинаковые города\nв авиа форме" as UC12
   }
 
   package "Автобусы\nbus.tutu.ru" {
-    usecase "Поиск автобусов\nМосква → Тула\nна завтра" as UC06
+    usecase "Поиск автобусов\nМосква -> Тула\nна завтра" as UC06
   }
 
   package "Отели\nhotel.tutu.ru" {
@@ -54,7 +53,7 @@ rectangle "tutu.ru" {
   }
 
   package "Электрички\n/prigorod/" {
-    usecase "Расписание\nэлектричек\nМосква → Мытищи" as UC08
+    usecase "Расписание\nэлектричек\nМосква -> Мытищи" as UC08
   }
 
   package "Справочная\n/2read/" {
@@ -66,7 +65,6 @@ Guest --> UC01
 Guest --> UC02
 Guest --> UC03
 Guest --> UC04
-Guest --> UC05
 Guest --> UC06
 Guest --> UC07
 Guest --> UC08
@@ -76,33 +74,24 @@ Guest --> UC12
 
 UC02 ..> UC01 : <<extend>>\nпосле UC-01
 UC03 ..> UC01 : <<extend>>\nпосле UC-01
-UC05 ..> UC04 : <<extend>>\nпосле UC-04
 
 note right of UC12
   <b>Негативный сценарий</b>
   Система должна:
   - Не пустить на /f/...
   - Показать валидацию
-  - URL остаётся avia.tutu.ru
+  - URL остается avia.tutu.ru
 end note
 
 note bottom of UC10
   <b>Авторизация</b>
   - Открыть модалку
   - Ввести email
-  - Клик «Получить код»
-end note
-
-note left of UC01
-  <b>Базовый поиск</b>
-  - Откуда/Куда
-  - Выбор даты
-  - >= 4 карточки
+  - Клик "Получить код"
 end note
 
 note right of UC08
   <b>Расписание</b>
-  - Форма предзаполнена
   - >= 1 время HH:MM
   - /prigorod/ в URL
 end note

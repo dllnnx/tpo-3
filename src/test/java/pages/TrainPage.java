@@ -36,35 +36,32 @@ public class TrainPage extends BaseFormPage {
     }
 
     private void fillFieldWithExactText(By inputLocator, String prefix, String exactCity) {
-
         WebElement input = wait.until(ExpectedConditions.elementToBeClickable(inputLocator));
+        ((JavascriptExecutor) driver).executeScript("arguments[0].scrollIntoView({block:'center'});", input);
 
-        driver.findElements(inputLocator).get(0).click();
+        String currentValue = input.getDomAttribute("value");
+        if (currentValue != null && currentValue.equalsIgnoreCase(exactCity)) {
+            return;
+        }
+
         input.click();
         input.clear();
         input.sendKeys(prefix);
 
-        WebElement matched = wait.until(driver -> {
-            List<WebElement> items = driver.findElements(SUGGEST_ITEM);
+        wait.until(ExpectedConditions.visibilityOfElementLocated(SUGGEST_CONTAINER));
 
-            for (WebElement el : items) {
-                if (!el.isDisplayed()) continue;
+        By exactSuggestion = By.xpath("//div[@data-ti='dropdown-item' and contains(., '" + exactCity + "')]");
 
-                String text = el.getText();
-                if (text != null && text.toLowerCase().contains(exactCity.toLowerCase())) {
-                    return el;
-                }
-            }
-            return null;
-        });
+        WebElement suggestion = wait.until(ExpectedConditions.elementToBeClickable(exactSuggestion));
 
-        matched.click();
+        suggestion.click();
 
         wait.until(d -> {
-            String value = d.findElement(inputLocator).getDomAttribute("value");
-            return value != null &&
-                    value.toLowerCase().contains(exactCity.toLowerCase());
+            String value = input.getDomAttribute("value");
+            return value != null && value.equalsIgnoreCase(exactCity);
         });
+
+        wait.until(ExpectedConditions.invisibilityOfElementLocated(SUGGEST_CONTAINER));
     }
 
     public TrainPage pickDateInDays(int daysFromToday) {

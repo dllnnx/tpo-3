@@ -21,8 +21,7 @@ public class BusTest extends BaseTest {
         results.waitForResults();
 
         String url = results.currentUrl();
-        Assert.assertTrue(url.contains("bus.tutu.ru"),
-                "URL должен оставаться на bus.tutu.ru после поиска: " + url);
+        Assert.assertTrue(url.contains("bus.tutu.ru"), "Неверный URL: " + url);
 
         Assert.assertTrue(results.hasPriceFormat());
     }

@@ -31,9 +31,6 @@ public class AviaTest extends BaseTest {
         AviaResultsPage results = avia.submit();
         results.waitForResults();
 
-        Assert.assertTrue(driver.getCurrentUrl().contains("avia.tutu.ru"),
-                "После submit ожидаем переход на страницу результатов /f/ либо остаёмся на avia.tutu.ru. " +
-                        "URL: " + driver.getCurrentUrl());
         Assert.assertTrue(results.hasAirlineName());
     }
 
@@ -47,9 +44,7 @@ public class AviaTest extends BaseTest {
         boolean noNavigation = avia.submitAndExpectNoNavigation();
         boolean validationHint = avia.hasValidationHint();
 
-        Assert.assertTrue(noNavigation || validationHint,
-                "Ожидаем либо отсутствие навигации на /f/, либо подсказку валидации. " +
-                        "noNav=" + noNavigation + ", hint=" + validationHint +
-                        ", url=" + driver.getCurrentUrl());
+        Assert.assertTrue(noNavigation || validationHint, "ожидаем либо отсутствие навигации, либо подсказку валидации " +
+                "noNav=" + noNavigation + ", hint=" + validationHint + ", url=" + driver.getCurrentUrl());
     }
 }

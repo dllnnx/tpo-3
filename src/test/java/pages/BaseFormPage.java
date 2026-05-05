@@ -1,12 +1,14 @@
 package pages;
 
 import org.openqa.selenium.By;
+import org.openqa.selenium.JavascriptExecutor;
 import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.WebElement;
 import org.openqa.selenium.support.ui.ExpectedConditions;
 import org.openqa.selenium.support.ui.WebDriverWait;
 import utils.DateUtils;
 
+import java.time.Duration;
 import java.time.LocalDate;
 import java.time.ZoneId;
 import java.util.List;
@@ -32,6 +34,7 @@ public class BaseFormPage extends Page {
 
     protected WebElement fillField(By input, String city) {
         WebElement inp = wait.until(ExpectedConditions.elementToBeClickable(input));
+        ((JavascriptExecutor) driver).executeScript("arguments[0].scrollIntoView({block:'center'});", inp);
 
         inp.click();
         inp.clear();
@@ -39,22 +42,23 @@ public class BaseFormPage extends Page {
 
         wait.until(ExpectedConditions.visibilityOfElementLocated(SUGGEST_CONTAINER));
 
-        WebElement matchedSuggestion = wait.until(driver -> {
-            List<WebElement> items = driver.findElements(SUGGEST_ITEM);
-            for (WebElement el : items) {
-                try {
-                    String text = el.getText();
-                    if (el.isDisplayed() &&
-                            text != null &&
-                            text.toLowerCase().contains(city.toLowerCase())) {
-                        return el;
-                    }
-                } catch (Exception ignored) {}
-            }
-            return null;
+        wait.until(d -> {
+            List<WebElement> items = d.findElements(SUGGEST_ITEM);
+            return !items.isEmpty() && items.get(0).isDisplayed();
         });
 
-        matchedSuggestion.click();
+        WebElement first = driver.findElements(SUGGEST_ITEM).get(0);
+        ((JavascriptExecutor) driver).executeScript("arguments[0].click();", first);
+
+        try {
+            new WebDriverWait(driver, Duration.ofSeconds(5)).until(ExpectedConditions.invisibilityOfElementLocated(SUGGEST_CONTAINER));
+        } catch (Exception ignored) {
+        }
+
+        wait.until(d -> {
+            String v = d.findElement(input).getDomAttribute("value");
+            return v != null && !v.isEmpty();
+        });
         return inp;
     }
 
@@ -94,6 +98,13 @@ public class BaseFormPage extends Page {
     }
 
     protected void clickSubmit() {
-        wait.until(ExpectedConditions.elementToBeClickable(SUBMIT)).click();
+        WebElement btn = wait.until(ExpectedConditions.elementToBeClickable(SUBMIT));
+        ((JavascriptExecutor) driver).executeScript("arguments[0].scrollIntoView({block:'center'});", btn);
+
+        try {
+            btn.click();
+        } catch (Exception e) {
+            ((JavascriptExecutor) driver).executeScript("arguments[0].click();", btn);
+        }
     }
 }

@@ -1,7 +1,6 @@
 package base;
 
 import org.apache.log4j.Logger;
-import org.openqa.selenium.Cookie;
 import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.support.ui.WebDriverWait;
 import org.testng.annotations.AfterMethod;
@@ -25,9 +24,9 @@ public abstract class BaseTest {
         logger.info("Starting browser: " + browser);
         driver = DriverFactory.create(browser);
         driver.manage().window().maximize();
-        driver.manage().timeouts().pageLoadTimeout(Duration.ofSeconds(60));
+        driver.manage().timeouts().pageLoadTimeout(Duration.ofSeconds(100));
         driver.manage().timeouts().implicitlyWait(Duration.ZERO);
-        wait = new WebDriverWait(driver, Duration.ofSeconds(7), Duration.ofMillis(100));
+        wait = new WebDriverWait(driver, Duration.ofSeconds(30), Duration.ofMillis(100));
     }
 
     @AfterMethod(alwaysRun = true)

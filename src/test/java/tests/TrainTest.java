@@ -20,7 +20,7 @@ public class TrainTest extends BaseTest {
                 .waitForResults();
 
         Assert.assertTrue(results.countTrainCards() >= 4,
-                "Ожидаем минимум 4 карточки поездов в результатах, нашли: " + results.countTrainCards());
+                "Должно быть минимум 4 карточки поездов в результатах, найдено: " + results.countTrainCards());
     }
 
     @Test(description = "UC-02: фильтр Сапсан в результатах ж/д")
@@ -36,11 +36,9 @@ public class TrainTest extends BaseTest {
         int trainsBefore = results.countTrainCards();
         results.clickSapsanFilter();
 
-        Assert.assertTrue(results.isSapsanFilterActive(),
-                "Чип «Сапсан» должен получить класс selected после клика");
-        Assert.assertTrue(results.allVisibleTrainsAreSapsan(),
-                "После фильтра все видимые поезда должны быть «Сапсан». " +
-                        "Найдены: " + results.visibleTrainNames());
+        Assert.assertTrue(results.isSapsanFilterActive(), "Чип \"Сапсан\" должен получить класс selected после клика");
+        Assert.assertTrue(results.allVisibleTrainsAreSapsan(), "После фильтра все видимые поезда должны быть \"Сапсан\". " +
+                        "Найдено: " + results.visibleTrainNames());
         Assert.assertTrue(results.countTrainCards() <= trainsBefore,
                 "Количество карточек после применения фильтра не должно вырасти");
     }
@@ -59,13 +57,10 @@ public class TrainTest extends BaseTest {
         results.clickAdjacentDateInStrip();
         String urlAfter = driver.getCurrentUrl();
 
-        Assert.assertNotEquals(urlAfter, urlBefore,
-                "URL должен измениться после клика по соседней дате в date-strip");
-        Assert.assertTrue(urlAfter.contains("/poezda/"),
-                "После переключения даты должны оставаться на странице результатов /poezda/");
+        Assert.assertNotEquals(urlAfter, urlBefore, "URL должен измениться после клика по соседней дате в date-strip");
+        Assert.assertTrue(urlAfter.contains("/poezda/"), "Неверный URL");
 
         results.waitForResults();
-        Assert.assertTrue(results.countTrainCards() >= 1,
-                "На новой дате должны быть результаты (≥ 1 карточка после ожидания загрузки)");
+        Assert.assertTrue(results.countTrainCards() >= 1, "Должна быть хотя бы 1 карточка после ожидания загрузки");
     }
 }

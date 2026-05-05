@@ -11,19 +11,15 @@ public class HomePageTest extends BaseTest {
     @Test(description = "UC-10: открытие модалки авторизации и ввод email")
     public void uc10_openLoginModalAndSubmitEmail() {
         HomePage home = new HomePage(driver, wait).open();
-        Assert.assertTrue(home.isHeaderNavigationVisible(),
-                "Шапка с навигацией должна быть видна");
+        Assert.assertTrue(home.isHeaderNavigationVisible(), "Шапка с навигацией должна быть видна");
 
         LoginModalPage modal = home.openLoginModal().waitForVisible();
-        Assert.assertTrue(modal.isEmailFieldVisible(),
-                "Поле ввода email должно быть видно после клика «Войти»");
+        Assert.assertTrue(modal.isEmailFieldVisible(), "Поле ввода email должно быть видно");
 
         modal.fillEmail("test_user_uc10@example.com");
-        Assert.assertEquals(modal.getEmailValue(), "test_user_uc10@example.com",
-                "Введённый email должен сохраниться в поле");
+        Assert.assertEquals(modal.getEmailValue(), "test_user_uc10@example.com", "Введенный email должен сохраниться в поле");
 
         modal.clickContinue();
-        Assert.assertTrue(modal.codeStepReached(),
-                "После отправки email должен появиться шаг ввода кода или сообщение");
+        Assert.assertTrue(modal.codeStepReached(), "После отправки email должен появиться шаг ввода кода или сообщение");
     }
 }

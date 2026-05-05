@@ -17,10 +17,7 @@ public class FaqTest extends BaseTest {
         boolean hasRelevantResults = faq.countResultsContainingKeyword("озврат") >= 1
                 && faq.countResultsContainingKeyword("ернуть") >= 1;
 
-        Assert.assertTrue(urlChanged && hasRelevantResults,
-                "URL должен измениться после поиска или должны появиться результаты по запросу. " +
-                        "URL: " + urlAfterSearch);
-        Assert.assertTrue(faq.hasResultsHeading(),
-                "На странице результатов должны быть видны заголовки (h1/h2)");
+        Assert.assertTrue(urlChanged && hasRelevantResults, "Неверный URL: " + urlAfterSearch);
+        Assert.assertTrue(faq.hasResultsHeading(), "На странице результатов должны быть видны заголовки");
     }
 }
