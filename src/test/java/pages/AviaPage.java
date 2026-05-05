@@ -77,9 +77,9 @@ public class AviaPage extends BaseFormPage {
         try {
             WebDriverWait shortWait = new WebDriverWait(driver, Duration.ofSeconds(3));
             shortWait.until(d -> d.getCurrentUrl().contains("/f/"));
-            return false; // Navigation occurred
+            return false;
         } catch (Exception e) {
-            return !driver.getCurrentUrl().contains("/f/"); // No navigation
+            return !driver.getCurrentUrl().contains("/f/");
         }
     }
 
@@ -97,19 +97,15 @@ public class AviaPage extends BaseFormPage {
         ((JavascriptExecutor) driver).executeScript(
                 "arguments[0].scrollIntoView({block:'center'});", btn);
 
-        // Hide overlay widgets that might intercept clicks
         hideOverlayWidgets();
 
-        // Try native click first, fallback to JavaScript click
         try {
             btn.click();
         } catch (Exception e) {
             ((JavascriptExecutor) driver).executeScript("arguments[0].click();", btn);
         }
 
-        // Wait for navigation or new window
         if (!waitForUrlChangeOrNewWindow(oldHandles, oldUrl, Duration.ofSeconds(5))) {
-            // Retry click if navigation didn't occur
             ((JavascriptExecutor) driver).executeScript("arguments[0].click();", btn);
             waitForUrlChangeOrNewWindow(oldHandles, oldUrl, Duration.ofSeconds(8));
         }
@@ -155,7 +151,6 @@ public class AviaPage extends BaseFormPage {
                 }
             }
         } catch (Exception e) {
-            // No new window opened or timeout
         }
     }
 }

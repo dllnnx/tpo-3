@@ -42,8 +42,7 @@ public class ElectrichkaResultsPage extends Page {
                     if (HHMM.matcher(text).matches()) {
                         count++;
                     }
-                } catch (Exception e) {
-                    // Skip elements that can't be read
+                } catch (Exception ignored) {
                 }
             }
         }

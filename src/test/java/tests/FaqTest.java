@@ -7,9 +7,6 @@ import pages.FaqPage;
 
 public class FaqTest extends BaseTest {
 
-    /**
-     * UC-11: поиск в справочной
-     */
     @Test(description = "UC-11: поиск в справочной по запросу \"возврат билета\"")
     public void uc11_searchInFaq() {
         FaqPage faq = new FaqPage(driver, wait).open()

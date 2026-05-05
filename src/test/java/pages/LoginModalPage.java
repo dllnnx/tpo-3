@@ -44,7 +44,6 @@ public class LoginModalPage extends Page {
                     return el;
                 }
             } catch (Exception e) {
-                // Element not visible or interactable, try next
             }
         }
         return null;
@@ -57,11 +56,9 @@ public class LoginModalPage extends Page {
 
         input.click();
 
-        // Clear existing value (non-critical, continue if fails)
         try {
             input.clear();
-        } catch (Exception e) {
-            // Some input types don't support clear, will be overwritten by sendKeys
+        } catch (Exception ignored) {
         }
 
         input.sendKeys(email);
@@ -73,14 +70,12 @@ public class LoginModalPage extends Page {
         return input == null ? "" : input.getDomAttribute("value");
     }
 
-    public LoginModalPage clickContinue() {
+    public void clickContinue() {
         try {
             WebElement btn = wait.until(ExpectedConditions.elementToBeClickable(NEXT_BUTTON));
             ((JavascriptExecutor) driver).executeScript("arguments[0].click();", btn);
-        } catch (Exception e) {
-            // Button click failed - may be due to modal state or overlay
+        } catch (Exception ignored) {
         }
-        return this;
     }
 
     public boolean codeStepReached() {

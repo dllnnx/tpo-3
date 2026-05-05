@@ -9,12 +9,7 @@ import pages.HomePage;
 
 public class BusTest extends BaseTest {
 
-    /**
-     * UC-06: Поиск автобусов Москва → Тула на завтра.
-     * Bus → ввод Москва (suggest) → ввод Тула (suggest) → выбор даты «Завтра» → submit →
-     * ассерт изменения URL, наличия упоминания «автобус» или ≥ 1 рейса с временем.
-     */
-    @Test(description = "UC-06: Поиск автобусов Москва → Тула")
+    @Test(description = "UC-06: поиск автобусов Москва - Тула")
     public void uc06_searchBusesMoscowTula() {
         BusPage bus = new HomePage(driver, wait).open()
                 .clickBusTab()

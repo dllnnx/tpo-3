@@ -8,13 +8,7 @@ import pages.ElectrichkaResultsPage;
 
 public class ElectrichkaTest extends BaseTest {
 
-    /**
-     * UC-08: Расписание электричек Москва → Мытищи.
-     * /prigorod/ → проверка что форма предзаполнена дефолтным маршрутом → submit →
-     * ассерт URL содержит /prigorod/ и видны ≥ 5 строк времён формата HH:MM
-     * (или хотя бы упоминание «электричка»).
-     */
-    @Test(description = "UC-08: Расписание электричек по дефолтному маршруту")
+    @Test(description = "UC-08: расписание электричек по дефолтному маршруту")
     public void uc08_electrichkaSchedule() {
         ElectrichkaPage page = new ElectrichkaPage(driver, wait).open();
 

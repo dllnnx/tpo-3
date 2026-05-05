@@ -8,12 +8,7 @@ import pages.LoginModalPage;
 
 public class HomePageTest extends BaseTest {
 
-    /**
-     * UC-10: Открытие модалки авторизации и ввод email.
-     * Шаги: открыть главную → нажать «Войти» в шапке → дождаться модалки →
-     * ввести email → нажать «Продолжить/Получить код» → дождаться шага ввода кода.
-     */
-    @Test(description = "UC-10: Открытие модалки авторизации и ввод email")
+    @Test(description = "UC-10: открытие модалки авторизации и ввод email")
     public void uc10_openLoginModalAndSubmitEmail() {
         HomePage home = new HomePage(driver, wait).open();
         Assert.assertTrue(home.isHeaderNavigationVisible(),

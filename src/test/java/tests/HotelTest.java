@@ -9,13 +9,7 @@ import pages.HotelResultsPage;
 
 public class HotelTest extends BaseTest {
 
-    /**
-     * UC-07: Поиск отелей в Сочи на 2 ночи.
-     * Hotel → ввод «Сочи» в hotels-destination-input → выбор саджеста →
-     * выбор дат заезда +30, выезда +32 → submit → ассерт что URL содержит
-     * параметры поиска и видны ≥ 1 карточек отелей с ценой.
-     */
-    @Test(description = "UC-07: Поиск отелей в Сочи на 2 ночи")
+    @Test(description = "UC-07: поиск отелей в Сочи на 2 ночи")
     public void uc07_searchHotelsSochi() {
         HotelPage hotel = new HomePage(driver, wait).open()
                 .clickHotelTab()

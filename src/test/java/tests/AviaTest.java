@@ -13,14 +13,7 @@ import pages.HomePage;
 
 public class AviaTest extends BaseTest {
 
-    /**
-     * UC-04: Поиск авиабилетов Москва → Санкт-Петербург с заполнением формы.
-     * Авиа → клик «Откуда» → ввод Москва → клик dropdown-item →
-     * клик «Куда» → ввод Санкт-Петербург → клик suggest →
-     * клик дата → выбор +14 дней → клик «Выбрать» → клик submit →
-     * ассерт: либо страница результатов /f/, либо поля формы корректно заполнены.
-     */
-    @Test(description = "UC-04: Поиск авиабилетов Москва → СПб (форма + suggest + календарь)")
+    @Test(description = "UC-04: поиск авиабилетов Москва -> СПб")
     public void uc04_searchFlightsMoscowSpb() {
         AviaPage avia = new HomePage(driver, wait).open()
                 .clickAviaTab()
@@ -44,12 +37,7 @@ public class AviaTest extends BaseTest {
         Assert.assertTrue(results.hasAirlineName());
     }
 
-    /**
-     * UC-12: Negative — одинаковые «Откуда» и «Куда» = «Москва».
-     * После submit либо появляется валидационное сообщение об ошибке,
-     * либо переход на /f/ не происходит.
-     */
-    @Test(description = "UC-12: Negative — одинаковые города в авиа форме")
+    @Test(description = "UC-12: negative: одинаковые города в авиа форме")
     public void uc12_sameDepartureArrivalNegative() {
         AviaPage avia = new HomePage(driver, wait).open()
                 .clickAviaTab()

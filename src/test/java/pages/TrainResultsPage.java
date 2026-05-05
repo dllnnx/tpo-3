@@ -10,6 +10,7 @@ import org.openqa.selenium.support.ui.WebDriverWait;
 import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
 public class TrainResultsPage extends Page {
 
@@ -72,8 +73,7 @@ public class TrainResultsPage extends Page {
                     if (!text.isEmpty()) {
                         names.add(text);
                     }
-                } catch (Exception e) {
-                    // Skip elements that can't be read
+                } catch (Exception ignored) {
                 }
             }
         }
@@ -90,15 +90,13 @@ public class TrainResultsPage extends Page {
         clickWait.until(ExpectedConditions.elementToBeClickable(FILTER_SAPSAN));
         ((JavascriptExecutor) driver).executeScript("arguments[0].click();", chip);
 
-        // Wait for filter to be marked as selected (non-critical)
         try {
             filterWait.until(d -> {
                 WebElement c = d.findElement(FILTER_SAPSAN);
                 String cls = c.getDomAttribute("class");
                 return cls != null && cls.contains("selected");
             });
-        } catch (Exception e) {
-            // Filter may still be applied even if class doesn't update immediately
+        } catch (Exception ignored) {
         }
 
         return this;
@@ -145,9 +143,8 @@ public class TrainResultsPage extends Page {
                     "arguments[0].scrollIntoView({block:'center'}); arguments[0].click();", chip);
 
             WebDriverWait navWait = new WebDriverWait(driver, Duration.ofSeconds(20));
-            navWait.until(d -> !d.getCurrentUrl().equals(oldUrl));
-        } catch (Exception e) {
-            // Date navigation failed - may not have adjacent dates available
+            navWait.until(d -> !Objects.equals(d.getCurrentUrl(), oldUrl));
+        } catch (Exception ignored) {
         }
 
         return this;

@@ -9,14 +9,7 @@ import pages.TrainResultsPage;
 
 public class TrainTest extends BaseTest {
 
-    /**
-     * UC-01: Поиск ж/д билетов Москва → Санкт-Петербург с выбором даты.
-     * Главная → клик по вкладке «Ж/д билеты» (URL остаётся главной, у submit
-     * меняется текст на «Найти поезда») → Откуда=Москва → Куда=Санкт-Петербург →
-     * дата +30 дней → Submit → редирект на /poezda/ с результатами →
-     * ассерт ≥ 4 карточек поездов, упоминания типов вагонов.
-     */
-    @Test(description = "UC-01: Поиск ж/д Москва → СПб с выбором даты")
+    @Test(description = "UC-01: поиск ж/д Москва -> СПб с выбором даты")
     public void uc01_searchTrainsMoscowSpbWithDate() {
         TrainResultsPage results = new HomePage(driver, wait).open()
                 .clickTrainTab()
@@ -30,12 +23,7 @@ public class TrainTest extends BaseTest {
                 "Ожидаем минимум 4 карточки поездов в результатах, нашли: " + results.countTrainCards());
     }
 
-    /**
-     * UC-02: Фильтр «Сапсан» на странице результатов ж/д.
-     * Главная → клик «Ж/д билеты» → поиск Москва → СПб → активация чипа Сапсан →
-     * ассерт что нет других типов поездов (Ласточка / Ночной экспресс) в видимых результатах.
-     */
-    @Test(description = "UC-02: Фильтр «Сапсан» в результатах ж/д")
+    @Test(description = "UC-02: фильтр Сапсан в результатах ж/д")
     public void uc02_applySapsanFilter() {
         TrainResultsPage results = new HomePage(driver, wait).open()
                 .clickTrainTab()
@@ -57,12 +45,7 @@ public class TrainTest extends BaseTest {
                 "Количество карточек после применения фильтра не должно вырасти");
     }
 
-    /**
-     * UC-03: Переключение даты в date-strip на странице результатов ж/д.
-     * Главная → клик «Ж/д билеты» → поиск → клик по соседней дате в date-strip →
-     * проверка изменения URL и наличия результатов.
-     */
-    @Test(description = "UC-03: Переключение даты в date-strip результатов ж/д")
+    @Test(description = "UC-03: переключение даты в date-strip результатов ж/д")
     public void uc03_changeDateInDateStrip() {
         TrainResultsPage results = new HomePage(driver, wait).open()
                 .clickTrainTab()

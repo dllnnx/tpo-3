@@ -92,7 +92,6 @@ public class ElectrichkaPage extends Page {
 
         matched.click();
 
-        // Wait until input value is updated
         wait.until(d -> {
             String value = d.findElement(inputLocator).getDomAttribute("value");
             return value != null &&
@@ -105,12 +104,10 @@ public class ElectrichkaPage extends Page {
         ((JavascriptExecutor) driver).executeScript(
                 "arguments[0].scrollIntoView({block:'center'});", btn);
 
-        // Wait for button to be clickable (non-critical, continue if timeout)
         try {
             WebDriverWait shortWait = new WebDriverWait(driver, Duration.ofSeconds(5));
             shortWait.until(ExpectedConditions.elementToBeClickable(SUBMIT));
-        } catch (Exception e) {
-            // Continue with click even if elementToBeClickable times out
+        } catch (Exception ignored) {
         }
 
         ((JavascriptExecutor) driver).executeScript("arguments[0].click();", btn);
