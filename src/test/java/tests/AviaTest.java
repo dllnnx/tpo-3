@@ -34,6 +34,32 @@ public class AviaTest extends BaseTest {
         Assert.assertTrue(results.hasAirlineName());
     }
 
+    @Test(description = "UC-05: применение нескольких фильтров в результатах авиа")
+    public void uc05_applyMultipleAviaFilters() {
+        AviaResultsPage results = new HomePage(driver, wait).open()
+                .clickAviaTab()
+                .fillFrom("Москва")
+                .fillTo("Санкт-Петербург")
+                .pickDateInDays(14)
+                .submit()
+                .waitForResults();
+
+        int cardsBefore = results.countVisibleFlightCards();
+        results.openFiltersPanel();
+
+        String[] filters = {"С багажом", "Прямой", "Без багажа"};
+        for (String filter : filters) {
+            results.clickFilter(filter);
+            Assert.assertTrue(results.isFilterActive(filter),
+                    "Фильтр \"" + filter + "\" должен быть активен после клика");
+        }
+
+        Assert.assertTrue(results.countVisibleFlightCards() <= cardsBefore,
+                "Количество карточек после фильтров не должно вырасти");
+        Assert.assertTrue(results.resultsMention("багаж"),
+                "В результатах должно упоминаться багаж после фильтра");
+    }
+
     @Test(description = "UC-12: negative: одинаковые города в авиа форме")
     public void uc12_sameDepartureArrivalNegative() {
         AviaPage avia = new HomePage(driver, wait).open()
