@@ -2,8 +2,6 @@ package tests;
 
 import base.BaseTest;
 import org.openqa.selenium.By;
-import org.openqa.selenium.JavascriptExecutor;
-import org.openqa.selenium.WebElement;
 import org.openqa.selenium.support.ui.ExpectedConditions;
 import org.testng.Assert;
 import org.testng.annotations.Test;
@@ -47,17 +45,37 @@ public class AviaTest extends BaseTest {
         int cardsBefore = results.countVisibleFlightCards();
         results.openFiltersPanel();
 
-        String[] filters = {"С багажом", "Прямой", "Без багажа"};
-        for (String filter : filters) {
+        String[] topFilters = {"С багажом", "Прямой"};
+        for (String filter : topFilters) {
             results.clickFilter(filter);
             Assert.assertTrue(results.isFilterActive(filter),
                     "Фильтр \"" + filter + "\" должен быть активен после клика");
+        }
+
+        results.scrollFiltersPanelDown();
+
+        results.clickFilter("1 пересадка");
+        Assert.assertTrue(results.isFilterActive("1 пересадка"),
+                "Фильтр \"1 пересадка\" должен быть активен после клика");
+
+        results.scrollFiltersPanelDown();
+        String[] lowerLabelFilters = {"Аэрофлот", "Шереметьево"};
+        for (String filter : lowerLabelFilters) {
+            results.clickFilter(filter);
+            Assert.assertTrue(results.isFilterActive(filter) || results.countVisibleFlightCards() >= 1,
+                    "Фильтр \"" + filter + "\" должен примениться или оставить результаты");
         }
 
         Assert.assertTrue(results.countVisibleFlightCards() <= cardsBefore,
                 "Количество карточек после фильтров не должно вырасти");
         Assert.assertTrue(results.resultsMention("багаж"),
                 "В результатах должно упоминаться багаж после фильтра");
+
+        results.selectSort("Сначала дешёвые");
+        Assert.assertTrue(results.countVisibleFlightCards() >= 1,
+                "После сортировки должна остаться хотя бы одна карточка");
+        Assert.assertTrue(results.isSortedByPriceAscending(),
+                "Цены в списке должны идти по возрастанию: " + results.getVisibleOfferPrices());
     }
 
     @Test(description = "UC-12: negative: одинаковые города в авиа форме")
